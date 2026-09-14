@@ -1,0 +1,61 @@
+version: "3.9"
+
+# =============================================================================
+# Katarina's Nutrition Tracker — Local Development Stack
+#
+# Usage:
+#   docker compose up           → starts both frontend and backend
+#   docker compose up backend   → backend only
+#   docker compose logs -f      → follow logs
+#   docker compose down         → stop everything
+#
+# Frontend: http://localhost:5173
+# Backend:  http://localhost:3001
+# Health:   http://localhost:3001/health
+# =============================================================================
+
+services:
+
+  # ── Backend: Node.js + TypeScript + Express + SQLite ──────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nutrition-api
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      FRONTEND_URL: http://localhost:5173
+      NODE_ENV: development
+    volumes:
+      # Persist SQLite database file outside the container
+      - nutrition-db:/app/data
+      # Hot reload: mount source for ts-node-dev
+      - ./backend/src:/app/src
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Frontend: React + TypeScript + Vite ───────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nutrition-app
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: ""   # Empty = uses Vite proxy to backend
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/src  # Hot reload
+    restart: unless-stopped
+
+volumes:
+  nutrition-db:
+    driver: local
