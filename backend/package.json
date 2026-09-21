@@ -5,9 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "migrate": "ts-node src/db/migrate.ts"
+    "build": "tsc && cp src/db/schema.sql dist/db/schema.sql",
+    "start": "node dist/index.js"
   },
   "dependencies": {
     "better-sqlite3": "^9.4.3",
