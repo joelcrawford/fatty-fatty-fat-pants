@@ -1,0 +1,1858 @@
+{
+  "_about": "Seed data for the built-in catalog. Edit a value here and restart the API: rows are upserted by seed_key, so corrections reach existing databases. Never reuse or renumber a seed_key. Custom foods that users add are never touched by seeding.",
+  "reference_weight_kg": 60.8,
+  "foods": [
+    {
+      "seed_key": "food-001",
+      "name": "Chicken Breast (cooked)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 165,
+      "protein": 31,
+      "carbs": 0,
+      "fat": 3.6,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-002",
+      "name": "Salmon (cooked)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 208,
+      "protein": 20,
+      "carbs": 0,
+      "fat": 13,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-003",
+      "name": "Egg (large)",
+      "category": "Protein",
+      "unit": "egg",
+      "default_serving": 1,
+      "cal": 78,
+      "protein": 6,
+      "carbs": 0.6,
+      "fat": 5,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-004",
+      "name": "Greek Yogurt (plain, 0% fat)",
+      "category": "Dairy",
+      "unit": "g",
+      "default_serving": 170,
+      "cal": 100,
+      "protein": 17,
+      "carbs": 6,
+      "fat": 0.7,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-005",
+      "name": "Cottage Cheese (1%)",
+      "category": "Dairy",
+      "unit": "g",
+      "default_serving": 113,
+      "cal": 81,
+      "protein": 14,
+      "carbs": 3,
+      "fat": 1.2,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-006",
+      "name": "Tofu (firm)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 76,
+      "protein": 8,
+      "carbs": 2,
+      "fat": 4.3,
+      "fiber": 0.4
+    },
+    {
+      "seed_key": "food-007",
+      "name": "Tuna (canned in water)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 109,
+      "protein": 25,
+      "carbs": 0,
+      "fat": 0.8,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-008",
+      "name": "Turkey Breast (cooked)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 135,
+      "protein": 30,
+      "carbs": 0,
+      "fat": 1,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-009",
+      "name": "Shrimp (cooked)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 99,
+      "protein": 24,
+      "carbs": 0.3,
+      "fat": 0.3,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-010",
+      "name": "Ground Beef (90% lean)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 218,
+      "protein": 26,
+      "carbs": 0,
+      "fat": 12,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-011",
+      "name": "Milk (2%)",
+      "category": "Dairy",
+      "unit": "ml",
+      "default_serving": 240,
+      "cal": 122,
+      "protein": 8,
+      "carbs": 12,
+      "fat": 5,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-012",
+      "name": "Cheddar Cheese",
+      "category": "Dairy",
+      "unit": "g",
+      "default_serving": 28,
+      "cal": 113,
+      "protein": 7,
+      "carbs": 0.4,
+      "fat": 9.3,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-013",
+      "name": "Mozzarella (part skim)",
+      "category": "Dairy",
+      "unit": "g",
+      "default_serving": 28,
+      "cal": 71,
+      "protein": 7,
+      "carbs": 0.8,
+      "fat": 4.5,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-014",
+      "name": "Oatmeal (cooked)",
+      "category": "Grains",
+      "unit": "g",
+      "default_serving": 234,
+      "cal": 166,
+      "protein": 5.9,
+      "carbs": 28,
+      "fat": 3.6,
+      "fiber": 4
+    },
+    {
+      "seed_key": "food-015",
+      "name": "Brown Rice (cooked)",
+      "category": "Grains",
+      "unit": "g",
+      "default_serving": 195,
+      "cal": 216,
+      "protein": 5,
+      "carbs": 45,
+      "fat": 1.8,
+      "fiber": 3.5
+    },
+    {
+      "seed_key": "food-016",
+      "name": "Quinoa (cooked)",
+      "category": "Grains",
+      "unit": "g",
+      "default_serving": 185,
+      "cal": 222,
+      "protein": 8,
+      "carbs": 39,
+      "fat": 3.5,
+      "fiber": 5.2
+    },
+    {
+      "seed_key": "food-017",
+      "name": "Whole Wheat Bread",
+      "category": "Grains",
+      "unit": "slice",
+      "default_serving": 1,
+      "cal": 69,
+      "protein": 3.6,
+      "carbs": 12,
+      "fat": 1,
+      "fiber": 1.9
+    },
+    {
+      "seed_key": "food-018",
+      "name": "Pasta (cooked)",
+      "category": "Grains",
+      "unit": "g",
+      "default_serving": 140,
+      "cal": 220,
+      "protein": 8,
+      "carbs": 43,
+      "fat": 1.3,
+      "fiber": 2.5
+    },
+    {
+      "seed_key": "food-019",
+      "name": "White Rice (cooked)",
+      "category": "Grains",
+      "unit": "g",
+      "default_serving": 186,
+      "cal": 206,
+      "protein": 4,
+      "carbs": 45,
+      "fat": 0.4,
+      "fiber": 0.6
+    },
+    {
+      "seed_key": "food-020",
+      "name": "Broccoli",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 31,
+      "protein": 2.6,
+      "carbs": 6,
+      "fat": 0.3,
+      "fiber": 2.6
+    },
+    {
+      "seed_key": "food-021",
+      "name": "Spinach (raw)",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 23,
+      "protein": 2.9,
+      "carbs": 3.6,
+      "fat": 0.4,
+      "fiber": 2.2
+    },
+    {
+      "seed_key": "food-022",
+      "name": "Kale",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 49,
+      "protein": 4.3,
+      "carbs": 9,
+      "fat": 0.9,
+      "fiber": 3.6
+    },
+    {
+      "seed_key": "food-023",
+      "name": "Carrots",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 41,
+      "protein": 0.9,
+      "carbs": 10,
+      "fat": 0.2,
+      "fiber": 2.8
+    },
+    {
+      "seed_key": "food-024",
+      "name": "Sweet Potato",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 86,
+      "protein": 1.6,
+      "carbs": 20,
+      "fat": 0.1,
+      "fiber": 3
+    },
+    {
+      "seed_key": "food-025",
+      "name": "Tomato",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 18,
+      "protein": 0.9,
+      "carbs": 3.9,
+      "fat": 0.2,
+      "fiber": 1.2
+    },
+    {
+      "seed_key": "food-026",
+      "name": "Cucumber",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 15,
+      "protein": 0.7,
+      "carbs": 3.6,
+      "fat": 0.1,
+      "fiber": 0.5
+    },
+    {
+      "seed_key": "food-027",
+      "name": "Bell Pepper",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 31,
+      "protein": 1,
+      "carbs": 6,
+      "fat": 0.3,
+      "fiber": 2.1
+    },
+    {
+      "seed_key": "food-028",
+      "name": "Avocado",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 160,
+      "protein": 2,
+      "carbs": 9,
+      "fat": 15,
+      "fiber": 6.7
+    },
+    {
+      "seed_key": "food-029",
+      "name": "Zucchini",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 17,
+      "protein": 1.2,
+      "carbs": 3.1,
+      "fat": 0.3,
+      "fiber": 1
+    },
+    {
+      "seed_key": "food-030",
+      "name": "Apple (medium)",
+      "category": "Fruit",
+      "unit": "apple",
+      "default_serving": 1,
+      "cal": 95,
+      "protein": 0.5,
+      "carbs": 25,
+      "fat": 0.3,
+      "fiber": 4.4
+    },
+    {
+      "seed_key": "food-031",
+      "name": "Banana (medium)",
+      "category": "Fruit",
+      "unit": "banana",
+      "default_serving": 1,
+      "cal": 105,
+      "protein": 1.3,
+      "carbs": 27,
+      "fat": 0.4,
+      "fiber": 3.1
+    },
+    {
+      "seed_key": "food-032",
+      "name": "Blueberries",
+      "category": "Fruit",
+      "unit": "g",
+      "default_serving": 148,
+      "cal": 84,
+      "protein": 1.1,
+      "carbs": 21,
+      "fat": 0.5,
+      "fiber": 3.6
+    },
+    {
+      "seed_key": "food-033",
+      "name": "Strawberries",
+      "category": "Fruit",
+      "unit": "g",
+      "default_serving": 152,
+      "cal": 49,
+      "protein": 1,
+      "carbs": 12,
+      "fat": 0.5,
+      "fiber": 3
+    },
+    {
+      "seed_key": "food-034",
+      "name": "Orange (medium)",
+      "category": "Fruit",
+      "unit": "orange",
+      "default_serving": 1,
+      "cal": 62,
+      "protein": 1.2,
+      "carbs": 15,
+      "fat": 0.2,
+      "fiber": 3.1
+    },
+    {
+      "seed_key": "food-035",
+      "name": "Grapes",
+      "category": "Fruit",
+      "unit": "g",
+      "default_serving": 151,
+      "cal": 104,
+      "protein": 1.1,
+      "carbs": 27,
+      "fat": 0.2,
+      "fiber": 1.4
+    },
+    {
+      "seed_key": "food-036",
+      "name": "Olive Oil",
+      "category": "Fats",
+      "unit": "tbsp",
+      "default_serving": 1,
+      "cal": 119,
+      "protein": 0,
+      "carbs": 0,
+      "fat": 13.5,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-037",
+      "name": "Almonds",
+      "category": "Fats",
+      "unit": "g",
+      "default_serving": 28,
+      "cal": 164,
+      "protein": 6,
+      "carbs": 6,
+      "fat": 14,
+      "fiber": 3.5
+    },
+    {
+      "seed_key": "food-038",
+      "name": "Walnuts",
+      "category": "Fats",
+      "unit": "g",
+      "default_serving": 28,
+      "cal": 185,
+      "protein": 4.3,
+      "carbs": 3.9,
+      "fat": 18.5,
+      "fiber": 2
+    },
+    {
+      "seed_key": "food-039",
+      "name": "Peanut Butter (natural)",
+      "category": "Fats",
+      "unit": "tbsp",
+      "default_serving": 2,
+      "cal": 188,
+      "protein": 8,
+      "carbs": 6,
+      "fat": 16,
+      "fiber": 1.9
+    },
+    {
+      "seed_key": "food-040",
+      "name": "Butter",
+      "category": "Fats",
+      "unit": "tbsp",
+      "default_serving": 1,
+      "cal": 102,
+      "protein": 0.1,
+      "carbs": 0,
+      "fat": 11.5,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-041",
+      "name": "Black Beans (cooked)",
+      "category": "Legumes",
+      "unit": "g",
+      "default_serving": 172,
+      "cal": 227,
+      "protein": 15,
+      "carbs": 41,
+      "fat": 0.9,
+      "fiber": 15
+    },
+    {
+      "seed_key": "food-042",
+      "name": "Lentils (cooked)",
+      "category": "Legumes",
+      "unit": "g",
+      "default_serving": 198,
+      "cal": 230,
+      "protein": 18,
+      "carbs": 40,
+      "fat": 0.8,
+      "fiber": 15.6
+    },
+    {
+      "seed_key": "food-043",
+      "name": "Hummus",
+      "category": "Legumes",
+      "unit": "tbsp",
+      "default_serving": 2,
+      "cal": 70,
+      "protein": 2,
+      "carbs": 8,
+      "fat": 3,
+      "fiber": 2
+    },
+    {
+      "seed_key": "food-044",
+      "name": "Whey Protein Powder",
+      "category": "Protein",
+      "unit": "scoop",
+      "default_serving": 1,
+      "cal": 120,
+      "protein": 24,
+      "carbs": 3,
+      "fat": 1.5,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-045",
+      "name": "Coffee (black)",
+      "category": "Other",
+      "unit": "cup",
+      "default_serving": 1,
+      "cal": 2,
+      "protein": 0.3,
+      "carbs": 0,
+      "fat": 0,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-046",
+      "name": "Edamame (shelled)",
+      "category": "Legumes",
+      "unit": "g",
+      "default_serving": 155,
+      "cal": 188,
+      "protein": 18.5,
+      "carbs": 14,
+      "fat": 8,
+      "fiber": 8
+    },
+    {
+      "seed_key": "food-047",
+      "name": "Sardines (in water)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 85,
+      "cal": 149,
+      "protein": 21,
+      "carbs": 0,
+      "fat": 7,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-048",
+      "name": "Tempeh",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 193,
+      "protein": 20,
+      "carbs": 9,
+      "fat": 11,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-049",
+      "name": "Chia Seeds",
+      "category": "Fats",
+      "unit": "tbsp",
+      "default_serving": 2,
+      "cal": 138,
+      "protein": 4.7,
+      "carbs": 12,
+      "fat": 8.7,
+      "fiber": 11
+    },
+    {
+      "seed_key": "food-050",
+      "name": "Dark Chocolate (85%)",
+      "category": "Other",
+      "unit": "g",
+      "default_serving": 30,
+      "cal": 170,
+      "protein": 2,
+      "carbs": 13,
+      "fat": 12,
+      "fiber": 3
+    },
+    {
+      "seed_key": "food-051",
+      "name": "Cod (cooked)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 90,
+      "protein": 19,
+      "carbs": 0,
+      "fat": 0.8,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-052",
+      "name": "Halibut (cooked)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 111,
+      "protein": 23,
+      "carbs": 0,
+      "fat": 2.3,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-053",
+      "name": "Tilapia (cooked)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 111,
+      "protein": 23,
+      "carbs": 0,
+      "fat": 2.3,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-054",
+      "name": "Trout (cooked)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 150,
+      "protein": 23,
+      "carbs": 0,
+      "fat": 6,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-055",
+      "name": "Mackerel (cooked)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 205,
+      "protein": 19,
+      "carbs": 0,
+      "fat": 14,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-056",
+      "name": "Crab (cooked)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 97,
+      "protein": 20,
+      "carbs": 0,
+      "fat": 1.5,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-057",
+      "name": "Scallops (cooked)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 111,
+      "protein": 21,
+      "carbs": 5,
+      "fat": 0.8,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-058",
+      "name": "Mussels (cooked)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 172,
+      "protein": 24,
+      "carbs": 7,
+      "fat": 4.5,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-059",
+      "name": "Duck Breast (cooked)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 201,
+      "protein": 28,
+      "carbs": 0,
+      "fat": 10,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-060",
+      "name": "Pork Tenderloin (cooked)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 136,
+      "protein": 24,
+      "carbs": 0,
+      "fat": 3.9,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-061",
+      "name": "Lamb (lean, cooked)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 218,
+      "protein": 25,
+      "carbs": 0,
+      "fat": 13,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-062",
+      "name": "Beef Sirloin (cooked)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 207,
+      "protein": 30,
+      "carbs": 0,
+      "fat": 9,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-063",
+      "name": "Egg White",
+      "category": "Protein",
+      "unit": "egg white",
+      "default_serving": 1,
+      "cal": 17,
+      "protein": 3.6,
+      "carbs": 0.2,
+      "fat": 0.1,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-064",
+      "name": "Smoked Salmon",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 117,
+      "protein": 18,
+      "carbs": 0,
+      "fat": 4.3,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-065",
+      "name": "Oysters (cooked)",
+      "category": "Protein",
+      "unit": "g",
+      "default_serving": 85,
+      "cal": 79,
+      "protein": 9,
+      "carbs": 4.7,
+      "fat": 2.5,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-066",
+      "name": "Asparagus",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 20,
+      "protein": 2.2,
+      "carbs": 3.7,
+      "fat": 0.2,
+      "fiber": 2.1
+    },
+    {
+      "seed_key": "food-067",
+      "name": "Brussels Sprouts",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 43,
+      "protein": 3.4,
+      "carbs": 9,
+      "fat": 0.3,
+      "fiber": 3.8
+    },
+    {
+      "seed_key": "food-068",
+      "name": "Cauliflower",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 25,
+      "protein": 1.9,
+      "carbs": 5,
+      "fat": 0.3,
+      "fiber": 2
+    },
+    {
+      "seed_key": "food-069",
+      "name": "Green Beans",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 31,
+      "protein": 1.8,
+      "carbs": 7,
+      "fat": 0.1,
+      "fiber": 3.4
+    },
+    {
+      "seed_key": "food-070",
+      "name": "Mushrooms (white)",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 22,
+      "protein": 3.1,
+      "carbs": 3.3,
+      "fat": 0.3,
+      "fiber": 1
+    },
+    {
+      "seed_key": "food-071",
+      "name": "Eggplant",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 25,
+      "protein": 1,
+      "carbs": 6,
+      "fat": 0.2,
+      "fiber": 3
+    },
+    {
+      "seed_key": "food-072",
+      "name": "Cabbage",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 25,
+      "protein": 1.3,
+      "carbs": 5.8,
+      "fat": 0.1,
+      "fiber": 2.5
+    },
+    {
+      "seed_key": "food-073",
+      "name": "Beets",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 43,
+      "protein": 1.6,
+      "carbs": 9.6,
+      "fat": 0.2,
+      "fiber": 2.8
+    },
+    {
+      "seed_key": "food-074",
+      "name": "Artichoke (cooked)",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 120,
+      "cal": 64,
+      "protein": 3.5,
+      "carbs": 14,
+      "fat": 0.4,
+      "fiber": 7
+    },
+    {
+      "seed_key": "food-075",
+      "name": "Bok Choy",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 13,
+      "protein": 1.5,
+      "carbs": 2.2,
+      "fat": 0.2,
+      "fiber": 1
+    },
+    {
+      "seed_key": "food-076",
+      "name": "Celery",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 16,
+      "protein": 0.7,
+      "carbs": 3,
+      "fat": 0.2,
+      "fiber": 1.6
+    },
+    {
+      "seed_key": "food-077",
+      "name": "Leeks",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 61,
+      "protein": 1.5,
+      "carbs": 14,
+      "fat": 0.3,
+      "fiber": 1.8
+    },
+    {
+      "seed_key": "food-078",
+      "name": "Romaine Lettuce",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 17,
+      "protein": 1.2,
+      "carbs": 3.3,
+      "fat": 0.3,
+      "fiber": 2.1
+    },
+    {
+      "seed_key": "food-079",
+      "name": "Arugula",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 25,
+      "protein": 2.6,
+      "carbs": 3.7,
+      "fat": 0.7,
+      "fiber": 1.6
+    },
+    {
+      "seed_key": "food-080",
+      "name": "Snow Peas",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 42,
+      "protein": 2.8,
+      "carbs": 7.5,
+      "fat": 0.2,
+      "fiber": 2.6
+    },
+    {
+      "seed_key": "food-081",
+      "name": "Corn (kernels)",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 86,
+      "protein": 3.2,
+      "carbs": 19,
+      "fat": 1.2,
+      "fiber": 2.4
+    },
+    {
+      "seed_key": "food-082",
+      "name": "Onion",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 40,
+      "protein": 1.1,
+      "carbs": 9.3,
+      "fat": 0.1,
+      "fiber": 1.7
+    },
+    {
+      "seed_key": "food-083",
+      "name": "Butternut Squash",
+      "category": "Vegetables",
+      "unit": "g",
+      "default_serving": 100,
+      "cal": 45,
+      "protein": 1,
+      "carbs": 12,
+      "fat": 0.1,
+      "fiber": 2
+    },
+    {
+      "seed_key": "food-084",
+      "name": "Rice Cakes (plain)",
+      "category": "Snacks",
+      "unit": "cake",
+      "default_serving": 1,
+      "cal": 35,
+      "protein": 0.7,
+      "carbs": 7.3,
+      "fat": 0.3,
+      "fiber": 0.3
+    },
+    {
+      "seed_key": "food-085",
+      "name": "Popcorn (air-popped)",
+      "category": "Snacks",
+      "unit": "g",
+      "default_serving": 28,
+      "cal": 31,
+      "protein": 1,
+      "carbs": 6.2,
+      "fat": 0.4,
+      "fiber": 3.6
+    },
+    {
+      "seed_key": "food-086",
+      "name": "Mixed Nuts",
+      "category": "Snacks",
+      "unit": "g",
+      "default_serving": 28,
+      "cal": 173,
+      "protein": 5,
+      "carbs": 6,
+      "fat": 16,
+      "fiber": 2.5
+    },
+    {
+      "seed_key": "food-087",
+      "name": "Cashews",
+      "category": "Snacks",
+      "unit": "g",
+      "default_serving": 28,
+      "cal": 157,
+      "protein": 5.2,
+      "carbs": 9,
+      "fat": 12,
+      "fiber": 0.9
+    },
+    {
+      "seed_key": "food-088",
+      "name": "Pumpkin Seeds",
+      "category": "Snacks",
+      "unit": "g",
+      "default_serving": 28,
+      "cal": 151,
+      "protein": 8.6,
+      "carbs": 5,
+      "fat": 13,
+      "fiber": 1.7
+    },
+    {
+      "seed_key": "food-089",
+      "name": "Sunflower Seeds",
+      "category": "Snacks",
+      "unit": "g",
+      "default_serving": 28,
+      "cal": 166,
+      "protein": 5.5,
+      "carbs": 6.5,
+      "fat": 14,
+      "fiber": 2.4
+    },
+    {
+      "seed_key": "food-090",
+      "name": "String Cheese (1 stick)",
+      "category": "Snacks",
+      "unit": "stick",
+      "default_serving": 1,
+      "cal": 80,
+      "protein": 7,
+      "carbs": 1,
+      "fat": 5,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-091",
+      "name": "Babybel Cheese (1 wheel)",
+      "category": "Snacks",
+      "unit": "wheel",
+      "default_serving": 1,
+      "cal": 70,
+      "protein": 5,
+      "carbs": 0,
+      "fat": 6,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-092",
+      "name": "Celery with Peanut Butter",
+      "category": "Snacks",
+      "unit": "serving",
+      "default_serving": 1,
+      "cal": 110,
+      "protein": 4,
+      "carbs": 6,
+      "fat": 8.5,
+      "fiber": 2
+    },
+    {
+      "seed_key": "food-093",
+      "name": "Apple with Almond Butter",
+      "category": "Snacks",
+      "unit": "serving",
+      "default_serving": 1,
+      "cal": 190,
+      "protein": 3.5,
+      "carbs": 27,
+      "fat": 8.5,
+      "fiber": 6
+    },
+    {
+      "seed_key": "food-094",
+      "name": "Hard Boiled Egg",
+      "category": "Snacks",
+      "unit": "egg",
+      "default_serving": 1,
+      "cal": 78,
+      "protein": 6.3,
+      "carbs": 0.6,
+      "fat": 5.3,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-095",
+      "name": "Protein Bar (~200 cal)",
+      "category": "Snacks",
+      "unit": "bar",
+      "default_serving": 1,
+      "cal": 200,
+      "protein": 20,
+      "carbs": 22,
+      "fat": 7,
+      "fiber": 5
+    },
+    {
+      "seed_key": "food-096",
+      "name": "Crackers (whole grain, 5 pcs)",
+      "category": "Snacks",
+      "unit": "serving",
+      "default_serving": 1,
+      "cal": 80,
+      "protein": 2,
+      "carbs": 14,
+      "fat": 2,
+      "fiber": 2
+    },
+    {
+      "seed_key": "food-097",
+      "name": "Mango (sliced)",
+      "category": "Snacks",
+      "unit": "g",
+      "default_serving": 165,
+      "cal": 99,
+      "protein": 1.4,
+      "carbs": 25,
+      "fat": 0.6,
+      "fiber": 2.6
+    },
+    {
+      "seed_key": "food-098",
+      "name": "Medjool Dates (1)",
+      "category": "Snacks",
+      "unit": "date",
+      "default_serving": 1,
+      "cal": 66,
+      "protein": 0.4,
+      "carbs": 18,
+      "fat": 0,
+      "fiber": 1.6
+    },
+    {
+      "seed_key": "food-099",
+      "name": "Scrambled Eggs (2 eggs)",
+      "category": "Breakfast",
+      "unit": "serving",
+      "default_serving": 1,
+      "cal": 148,
+      "protein": 10,
+      "carbs": 1.6,
+      "fat": 10,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-100",
+      "name": "Overnight Oats (basic)",
+      "category": "Breakfast",
+      "unit": "serving",
+      "default_serving": 1,
+      "cal": 215,
+      "protein": 8,
+      "carbs": 34,
+      "fat": 5,
+      "fiber": 5
+    },
+    {
+      "seed_key": "food-101",
+      "name": "Smoothie (protein, basic)",
+      "category": "Breakfast",
+      "unit": "serving",
+      "default_serving": 1,
+      "cal": 230,
+      "protein": 24,
+      "carbs": 22,
+      "fat": 4,
+      "fiber": 3
+    },
+    {
+      "seed_key": "food-102",
+      "name": "Granola (low sugar)",
+      "category": "Breakfast",
+      "unit": "g",
+      "default_serving": 50,
+      "cal": 200,
+      "protein": 5,
+      "carbs": 32,
+      "fat": 7,
+      "fiber": 4
+    },
+    {
+      "seed_key": "food-103",
+      "name": "Whole Grain Pancake",
+      "category": "Breakfast",
+      "unit": "pancake",
+      "default_serving": 1,
+      "cal": 92,
+      "protein": 3,
+      "carbs": 15,
+      "fat": 2.5,
+      "fiber": 1.5
+    },
+    {
+      "seed_key": "food-104",
+      "name": "Bagel (whole wheat)",
+      "category": "Breakfast",
+      "unit": "bagel",
+      "default_serving": 1,
+      "cal": 245,
+      "protein": 10,
+      "carbs": 48,
+      "fat": 1.5,
+      "fiber": 4
+    },
+    {
+      "seed_key": "food-105",
+      "name": "Cream Cheese (light, 2 tbsp)",
+      "category": "Breakfast",
+      "unit": "serving",
+      "default_serving": 1,
+      "cal": 60,
+      "protein": 2.5,
+      "carbs": 2,
+      "fat": 5,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-106",
+      "name": "English Muffin (whole wheat)",
+      "category": "Breakfast",
+      "unit": "muffin",
+      "default_serving": 1,
+      "cal": 134,
+      "protein": 5.5,
+      "carbs": 26,
+      "fat": 1.5,
+      "fiber": 3
+    },
+    {
+      "seed_key": "food-107",
+      "name": "Acai Bowl (base)",
+      "category": "Breakfast",
+      "unit": "serving",
+      "default_serving": 1,
+      "cal": 200,
+      "protein": 3,
+      "carbs": 38,
+      "fat": 6,
+      "fiber": 5
+    },
+    {
+      "seed_key": "food-108",
+      "name": "Bran Cereal (1/2 cup)",
+      "category": "Breakfast",
+      "unit": "serving",
+      "default_serving": 1,
+      "cal": 83,
+      "protein": 2.7,
+      "carbs": 23,
+      "fat": 0.5,
+      "fiber": 6
+    },
+    {
+      "seed_key": "food-109",
+      "name": "Almond Milk (unsweetened)",
+      "category": "Breakfast",
+      "unit": "ml",
+      "default_serving": 240,
+      "cal": 30,
+      "protein": 1,
+      "carbs": 1,
+      "fat": 2.5,
+      "fiber": 0.5
+    },
+    {
+      "seed_key": "food-110",
+      "name": "Smoked Salmon & Cream Cheese on Toast",
+      "category": "Breakfast",
+      "unit": "serving",
+      "default_serving": 1,
+      "cal": 280,
+      "protein": 18,
+      "carbs": 26,
+      "fat": 10,
+      "fiber": 2
+    },
+    {
+      "seed_key": "food-111",
+      "name": "Avocado Roll (6 pieces)",
+      "category": "Sushi",
+      "unit": "roll",
+      "default_serving": 1,
+      "cal": 170,
+      "protein": 3,
+      "carbs": 32,
+      "fat": 4,
+      "fiber": 5
+    },
+    {
+      "seed_key": "food-112",
+      "name": "Tuna Nigiri",
+      "category": "Sushi",
+      "unit": "piece",
+      "default_serving": 1,
+      "cal": 60,
+      "protein": 7,
+      "carbs": 8,
+      "fat": 0.5,
+      "fiber": 0.2
+    },
+    {
+      "seed_key": "food-113",
+      "name": "Sockeye Salmon Nigiri",
+      "category": "Sushi",
+      "unit": "piece",
+      "default_serving": 1,
+      "cal": 65,
+      "protein": 6,
+      "carbs": 8,
+      "fat": 1.5,
+      "fiber": 0.2
+    },
+    {
+      "seed_key": "food-114",
+      "name": "Tuna Sashimi",
+      "category": "Sushi",
+      "unit": "piece",
+      "default_serving": 1,
+      "cal": 40,
+      "protein": 8,
+      "carbs": 0,
+      "fat": 0.5,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-115",
+      "name": "Sockeye Salmon Sashimi",
+      "category": "Sushi",
+      "unit": "piece",
+      "default_serving": 1,
+      "cal": 45,
+      "protein": 7,
+      "carbs": 0,
+      "fat": 1.5,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-116",
+      "name": "Miso Soup",
+      "category": "Sushi",
+      "unit": "bowl",
+      "default_serving": 1,
+      "cal": 40,
+      "protein": 3,
+      "carbs": 5,
+      "fat": 1,
+      "fiber": 1
+    },
+    {
+      "seed_key": "food-117",
+      "name": "Ponzu Sauce",
+      "category": "Sushi",
+      "unit": "tbsp",
+      "default_serving": 1,
+      "cal": 15,
+      "protein": 0.5,
+      "carbs": 3,
+      "fat": 0,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-118",
+      "name": "Premier Protein Shake – Chocolate",
+      "category": "Protein",
+      "unit": "bottle",
+      "default_serving": 1,
+      "cal": 160,
+      "protein": 30,
+      "carbs": 5,
+      "fat": 3,
+      "fiber": 3
+    },
+    {
+      "seed_key": "food-119",
+      "name": "Canadian Bacon (1 slice)",
+      "category": "Protein",
+      "unit": "slice",
+      "default_serving": 1,
+      "cal": 30,
+      "protein": 5,
+      "carbs": 0.3,
+      "fat": 1,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-120",
+      "name": "Hollandaise Sauce",
+      "category": "Other",
+      "unit": "tbsp",
+      "default_serving": 2,
+      "cal": 80,
+      "protein": 0.5,
+      "carbs": 0.5,
+      "fat": 8.5,
+      "fiber": 0
+    },
+    {
+      "seed_key": "food-121",
+      "name": "Natura Fibre (Brightside Organics)",
+      "category": "Other",
+      "unit": "g",
+      "default_serving": 30,
+      "cal": 120,
+      "protein": 4,
+      "carbs": 14,
+      "fat": 9,
+      "fiber": 14
+    }
+  ],
+  "exercises": [
+    {
+      "seed_key": "exercise-walking-moderate-3-mph",
+      "name": "Walking (moderate, 3 mph)",
+      "met": 3.289
+    },
+    {
+      "seed_key": "exercise-walking-brisk-4-mph",
+      "name": "Walking (brisk, 4 mph)",
+      "met": 4.229
+    },
+    {
+      "seed_key": "exercise-running-5-mph",
+      "name": "Running (5 mph)",
+      "met": 7.049
+    },
+    {
+      "seed_key": "exercise-running-6-mph",
+      "name": "Running (6+ mph)",
+      "met": 9.398
+    },
+    {
+      "seed_key": "exercise-cycling-moderate",
+      "name": "Cycling (moderate)",
+      "met": 5.639
+    },
+    {
+      "seed_key": "exercise-cycling-vigorous",
+      "name": "Cycling (vigorous)",
+      "met": 9.398
+    },
+    {
+      "seed_key": "exercise-swimming-laps",
+      "name": "Swimming (laps)",
+      "met": 6.579
+    },
+    {
+      "seed_key": "exercise-yoga",
+      "name": "Yoga",
+      "met": 2.632
+    },
+    {
+      "seed_key": "exercise-pilates",
+      "name": "Pilates",
+      "met": 3.289
+    },
+    {
+      "seed_key": "exercise-lagree-megaformer",
+      "name": "Lagree (Megaformer)",
+      "met": 6.109
+    },
+    {
+      "seed_key": "exercise-strength-upper-push-shoulders-chest-triceps-tue",
+      "name": "Strength: Upper Push – Shoulders, Chest, Triceps (Tue)",
+      "met": 3.571
+    },
+    {
+      "seed_key": "exercise-strength-legs-press-squats-rdls-curls-wed",
+      "name": "Strength: Legs – Press, Squats, RDLs, Curls (Wed)",
+      "met": 4.229
+    },
+    {
+      "seed_key": "exercise-strength-upper-pull-back-biceps-thu",
+      "name": "Strength: Upper Pull – Back, Biceps (Thu)",
+      "met": 3.571
+    },
+    {
+      "seed_key": "exercise-hiit",
+      "name": "HIIT",
+      "met": 8.459
+    },
+    {
+      "seed_key": "exercise-elliptical-moderate",
+      "name": "Elliptical (moderate)",
+      "met": 5.169
+    },
+    {
+      "seed_key": "exercise-rowing-machine",
+      "name": "Rowing Machine",
+      "met": 7.049
+    },
+    {
+      "seed_key": "exercise-dance-zumba",
+      "name": "Dance / Zumba",
+      "met": 5.169
+    },
+    {
+      "seed_key": "exercise-hiking",
+      "name": "Hiking",
+      "met": 5.169
+    },
+    {
+      "seed_key": "exercise-barre",
+      "name": "Barre",
+      "met": 3.759
+    },
+    {
+      "seed_key": "exercise-stretching",
+      "name": "Stretching",
+      "met": 1.88
+    }
+  ],
+  "meal_plans": [
+    {
+      "seed_key": "plan-001",
+      "name": "Lagree Morning",
+      "meal_type": "Breakfast",
+      "badge": "Workout Day",
+      "description": "Quick, no-cook high-protein start for training days.",
+      "items": [
+        {
+          "food": "food-118",
+          "serving_amount": 1
+        },
+        {
+          "food": "food-094",
+          "serving_amount": 1
+        },
+        {
+          "food": "food-045",
+          "serving_amount": 1
+        }
+      ]
+    },
+    {
+      "seed_key": "plan-002",
+      "name": "Smoked Salmon Plate",
+      "meal_type": "Breakfast",
+      "badge": "Galveston",
+      "description": "Anti-inflammatory omega-3 rich breakfast. High protein, near-zero net carbs.",
+      "items": [
+        {
+          "food": "food-064",
+          "serving_amount": 80
+        },
+        {
+          "food": "food-063",
+          "serving_amount": 3
+        },
+        {
+          "food": "food-026",
+          "serving_amount": 100
+        },
+        {
+          "food": "food-105",
+          "serving_amount": 1
+        }
+      ]
+    },
+    {
+      "seed_key": "plan-003",
+      "name": "Greek Protein Bowl",
+      "meal_type": "Breakfast",
+      "badge": "High Fibre",
+      "description": "Probiotic-rich with excellent fibre for gut health during menopause.",
+      "items": [
+        {
+          "food": "food-004",
+          "serving_amount": 170
+        },
+        {
+          "food": "food-032",
+          "serving_amount": 75
+        },
+        {
+          "food": "food-049",
+          "serving_amount": 2
+        },
+        {
+          "food": "food-121",
+          "serving_amount": 15
+        }
+      ]
+    },
+    {
+      "seed_key": "plan-004",
+      "name": "Weekend Eggs Benedict",
+      "meal_type": "Breakfast",
+      "badge": "Weekend Treat",
+      "description": "Your Eggs Benny with cheese. Higher-carb day — pair with low-carb meals.",
+      "items": [
+        {
+          "food": "food-106",
+          "serving_amount": 1
+        },
+        {
+          "food": "food-003",
+          "serving_amount": 2
+        },
+        {
+          "food": "food-012",
+          "serving_amount": 28
+        },
+        {
+          "food": "food-120",
+          "serving_amount": 2
+        }
+      ]
+    },
+    {
+      "seed_key": "plan-005",
+      "name": "Salmon Avocado Bowl",
+      "meal_type": "Lunch",
+      "badge": "Galveston",
+      "description": "Omega-3 rich anti-inflammatory powerhouse. The ideal Galveston lunch.",
+      "items": [
+        {
+          "food": "food-002",
+          "serving_amount": 120
+        },
+        {
+          "food": "food-021",
+          "serving_amount": 100
+        },
+        {
+          "food": "food-028",
+          "serving_amount": 80
+        },
+        {
+          "food": "food-026",
+          "serving_amount": 100
+        },
+        {
+          "food": "food-036",
+          "serving_amount": 1
+        }
+      ]
+    },
+    {
+      "seed_key": "plan-006",
+      "name": "Tuna Avocado Bowl",
+      "meal_type": "Lunch",
+      "badge": "Low Carb",
+      "description": "Very low net carbs — great for days after a higher-carb breakfast.",
+      "items": [
+        {
+          "food": "food-007",
+          "serving_amount": 100
+        },
+        {
+          "food": "food-028",
+          "serving_amount": 100
+        },
+        {
+          "food": "food-078",
+          "serving_amount": 100
+        },
+        {
+          "food": "food-076",
+          "serving_amount": 100
+        },
+        {
+          "food": "food-036",
+          "serving_amount": 1
+        }
+      ]
+    },
+    {
+      "seed_key": "plan-007",
+      "name": "Sushi Favourite",
+      "meal_type": "Lunch",
+      "badge": "Sushi Day",
+      "description": "Your go-to order. Higher-carb — best with low-carb breakfast and dinner.",
+      "items": [
+        {
+          "food": "food-112",
+          "serving_amount": 2
+        },
+        {
+          "food": "food-113",
+          "serving_amount": 2
+        },
+        {
+          "food": "food-114",
+          "serving_amount": 4
+        },
+        {
+          "food": "food-116",
+          "serving_amount": 1
+        },
+        {
+          "food": "food-117",
+          "serving_amount": 2
+        }
+      ]
+    },
+    {
+      "seed_key": "plan-008",
+      "name": "Chicken & Greens",
+      "meal_type": "Dinner",
+      "badge": "Galveston",
+      "description": "Classic Galveston dinner. High protein, anti-inflammatory, simple.",
+      "items": [
+        {
+          "food": "food-001",
+          "serving_amount": 150
+        },
+        {
+          "food": "food-020",
+          "serving_amount": 150
+        },
+        {
+          "food": "food-066",
+          "serving_amount": 100
+        },
+        {
+          "food": "food-036",
+          "serving_amount": 1
+        }
+      ]
+    },
+    {
+      "seed_key": "plan-009",
+      "name": "Salmon & Roasted Veg",
+      "meal_type": "Dinner",
+      "badge": "Anti-Inflammatory",
+      "description": "Fatty fish + cruciferous veg — ideal for menopausal hormonal balance.",
+      "items": [
+        {
+          "food": "food-002",
+          "serving_amount": 150
+        },
+        {
+          "food": "food-068",
+          "serving_amount": 150
+        },
+        {
+          "food": "food-069",
+          "serving_amount": 100
+        },
+        {
+          "food": "food-040",
+          "serving_amount": 1
+        }
+      ]
+    },
+    {
+      "seed_key": "plan-010",
+      "name": "Sirloin & Brussels",
+      "meal_type": "Dinner",
+      "badge": "Strength Day",
+      "description": "Higher protein for post-lifting recovery. Iron-rich for energy.",
+      "items": [
+        {
+          "food": "food-062",
+          "serving_amount": 120
+        },
+        {
+          "food": "food-067",
+          "serving_amount": 150
+        },
+        {
+          "food": "food-070",
+          "serving_amount": 100
+        },
+        {
+          "food": "food-036",
+          "serving_amount": 1
+        }
+      ]
+    },
+    {
+      "seed_key": "plan-011",
+      "name": "Afternoon Snack",
+      "meal_type": "Snacks",
+      "badge": "Quick",
+      "description": "Balanced fat and protein to hold you to dinner without spiking blood sugar.",
+      "items": [
+        {
+          "food": "food-037",
+          "serving_amount": 28
+        },
+        {
+          "food": "food-090",
+          "serving_amount": 1
+        }
+      ]
+    },
+    {
+      "seed_key": "plan-012",
+      "name": "Fibre Boost Bowl",
+      "meal_type": "Snacks",
+      "badge": "High Fibre",
+      "description": "Natura Fibre in yogurt with berries. Hits fibre target without blowing net carbs.",
+      "items": [
+        {
+          "food": "food-121",
+          "serving_amount": 15
+        },
+        {
+          "food": "food-004",
+          "serving_amount": 170
+        },
+        {
+          "food": "food-033",
+          "serving_amount": 75
+        }
+      ]
+    }
+  ]
+}

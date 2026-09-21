@@ -108,6 +108,43 @@ export const weightQuery = z.object({
     .default(30),
 });
 
+// ── Catalog ──────────────────────────────────────────────────────────────────
+
+// Same shape as a built-in food. Macros are per `default_serving` of `unit`.
+// Unlike a log entry's macros these do not default: a custom food with its
+// calories forgotten would silently log zeros forever.
+const macro = (max: number) =>
+  z
+    .number({ required_error: "is required", invalid_type_error: "must be a number" })
+    .finite("must be a finite number")
+    .min(0, "cannot be negative")
+    .max(max, `cannot be more than ${max}`);
+
+export const customFoodSchema = z.object({
+  name: text(200),
+  category: z.string({ invalid_type_error: "must be a string" }).trim().min(1, "cannot be empty").max(50, "cannot be longer than 50 characters").default("Other"),
+  unit: z.string({ invalid_type_error: "must be a string" }).trim().min(1, "cannot be empty").max(20, "cannot be longer than 20 characters").default("g"),
+  default_serving: z
+    .number({ invalid_type_error: "must be a number" })
+    .finite("must be a finite number")
+    .positive("must be greater than 0")
+    .max(10_000, "cannot be more than 10000")
+    .default(100),
+  cal: macro(10_000),
+  protein: macro(2_000),
+  carbs: macro(2_000),
+  fat: macro(2_000),
+  fiber: macro(2_000),
+  barcode: z.string({ invalid_type_error: "must be a string" }).trim().regex(/^\d{6,14}$/, "must be 6 to 14 digits").optional(),
+});
+export type CustomFoodInput = z.infer<typeof customFoodSchema>;
+
+export const foodSearchQuery = z.object({
+  q: z.string().trim().max(100, "cannot be longer than 100 characters").optional(),
+  category: z.string().trim().max(50, "cannot be longer than 50 characters").optional(),
+  scope: z.enum(["all", "mine", "builtin"], { errorMap: () => ({ message: "must be one of: all, mine, builtin" }) }).default("all"),
+});
+
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
 const email = z

@@ -144,6 +144,48 @@ Returns server status. Use this to verify the API is reachable before making dat
 
 ---
 
+## Catalog
+
+Foods, exercises and meal plans live in the database. Built-in rows come from `backend/src/db/seed/catalog.json` and are the same for everyone; custom foods belong to the user who added them and are invisible to everyone else. All catalog endpoints require authentication.
+
+> **Naming:** `/api/food` (singular) is the **log** of what was eaten. `/api/foods` (plural) is the **catalog** of things that can be eaten.
+
+### GET /api/foods
+Every built-in food, then the caller's own custom foods. The catalog is a few hundred small rows, so with no query it is returned whole and clients filter as the user types.
+
+| Query | Description |
+|---|---|
+| `q` | Case-insensitive match anywhere in the name. `%` and `_` are ordinary characters |
+| `category` | Exact category, case-insensitive (`Protein`, `Sushi`, …) |
+| `scope` | `all` (default), `mine` (custom only), `builtin` |
+
+```json
+{ "id": 28, "name": "Avocado", "category": "Vegetables", "unit": "g", "default_serving": 100,
+  "cal": 160, "protein": 2, "carbs": 9, "fat": 15, "fiber": 6.7, "barcode": null, "custom": false }
+```
+Macros are per `default_serving` of `unit`. To log 80 g of avocado, scale by `80 / 100`. `carbs` is total; net carbs is `max(0, carbs - fiber)`. `custom` is `true` for a food the caller added, and only those can be deleted.
+
+### POST /api/foods
+Adds a custom food. `name` and all five macros are **required** (a food saved with its calories forgotten would log zeros forever). `category` defaults to `Other`, `unit` to `g`, `default_serving` to `100`. Optional `barcode` of 6–14 digits. → **201** with the food in the shape above, `custom: true`.
+
+### DELETE /api/foods/:id
+Custom foods only. **403** for a built-in food. **404** for an unknown id *and* for another user's food, which are deliberately indistinguishable. Entries already logged from the food are unaffected: the log keeps its own copy of the name and macros.
+
+### GET /api/exercises
+```json
+{ "id": 10, "name": "Lagree (Megaformer)", "met": 6.109, "cal_per_min": 6.5, "cal_per_min_weight_kg": 60.8 }
+```
+`met` is the real datum: `cal/min = met × 3.5 × body weight (kg) / 200`. Until user profiles exist (#15), `cal_per_min` is computed for the reference weight stated in `cal_per_min_weight_kg`, which reproduces the original app's numbers.
+
+### GET /api/meal-plans
+Each plan with its items, and each item with its full food, so a client can display and log a recipe without a second request. Log it with `POST /api/food/batch`.
+```json
+{ "id": 5, "name": "Salmon Avocado Bowl", "meal_type": "Lunch", "badge": "Galveston", "description": "…",
+  "items": [ { "serving_amount": 120, "food": { "id": 2, "name": "Salmon (cooked)", "default_serving": 100, "cal": 208, "…": "…" } } ] }
+```
+
+---
+
 ## Food Log
 
 ### GET /api/food/:date
@@ -571,9 +613,6 @@ These endpoints do not exist yet but are planned as part of future feature devel
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/api/custom-foods` | List user's custom food entries |
-| POST | `/api/custom-foods` | Add a custom food |
-| DELETE | `/api/custom-foods/:id` | Remove a custom food |
 | GET | `/api/foods/barcode/:barcode` | Look up food by barcode (Open Food Facts proxy) |
 | GET | `/api/summary/weekly` | 7-day rolling averages |
 | GET | `/api/summary/export?start=&end=` | CSV export for dietitian |

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { api, FoodEntry, ExerciseEntry } from "./api";
+import { api, FoodEntry, ExerciseEntry, Food, Exercise, MealPlan } from "./api";
 import { daysAgo, useToday } from "./date";
 import { AccountPanel } from "./AuthScreens";
 import type { User } from "./session";
@@ -19,175 +19,7 @@ const C = {
   protein: "#C4714A", carbs: "#C9963A", fat: "#5E9478", fiber: "#7B6BB0",
 };
 
-// ── Food Library ──────────────────────────────────────────────────────────────
-interface Food {
-  id: number; name: string; cal: number; protein: number; carbs: number;
-  fat: number; fiber: number; unit: string; defaultServing: number; category: string;
-}
-
-const FOOD_LIBRARY: Food[] = [
-  { id: 1, name: "Chicken Breast (cooked)", cal: 165, protein: 31, carbs: 0, fat: 3.6, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 2, name: "Salmon (cooked)", cal: 208, protein: 20, carbs: 0, fat: 13, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 3, name: "Egg (large)", cal: 78, protein: 6, carbs: 0.6, fat: 5, fiber: 0, unit: "egg", defaultServing: 1, category: "Protein" },
-  { id: 4, name: "Greek Yogurt (plain, 0% fat)", cal: 100, protein: 17, carbs: 6, fat: 0.7, fiber: 0, unit: "g", defaultServing: 170, category: "Dairy" },
-  { id: 5, name: "Cottage Cheese (1%)", cal: 81, protein: 14, carbs: 3, fat: 1.2, fiber: 0, unit: "g", defaultServing: 113, category: "Dairy" },
-  { id: 6, name: "Tofu (firm)", cal: 76, protein: 8, carbs: 2, fat: 4.3, fiber: 0.4, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 7, name: "Tuna (canned in water)", cal: 109, protein: 25, carbs: 0, fat: 0.8, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 8, name: "Turkey Breast (cooked)", cal: 135, protein: 30, carbs: 0, fat: 1, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 9, name: "Shrimp (cooked)", cal: 99, protein: 24, carbs: 0.3, fat: 0.3, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 10, name: "Ground Beef (90% lean)", cal: 218, protein: 26, carbs: 0, fat: 12, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 11, name: "Milk (2%)", cal: 122, protein: 8, carbs: 12, fat: 5, fiber: 0, unit: "ml", defaultServing: 240, category: "Dairy" },
-  { id: 12, name: "Cheddar Cheese", cal: 113, protein: 7, carbs: 0.4, fat: 9.3, fiber: 0, unit: "g", defaultServing: 28, category: "Dairy" },
-  { id: 13, name: "Mozzarella (part skim)", cal: 71, protein: 7, carbs: 0.8, fat: 4.5, fiber: 0, unit: "g", defaultServing: 28, category: "Dairy" },
-  { id: 14, name: "Oatmeal (cooked)", cal: 166, protein: 5.9, carbs: 28, fat: 3.6, fiber: 4, unit: "g", defaultServing: 234, category: "Grains" },
-  { id: 15, name: "Brown Rice (cooked)", cal: 216, protein: 5, carbs: 45, fat: 1.8, fiber: 3.5, unit: "g", defaultServing: 195, category: "Grains" },
-  { id: 16, name: "Quinoa (cooked)", cal: 222, protein: 8, carbs: 39, fat: 3.5, fiber: 5.2, unit: "g", defaultServing: 185, category: "Grains" },
-  { id: 17, name: "Whole Wheat Bread", cal: 69, protein: 3.6, carbs: 12, fat: 1, fiber: 1.9, unit: "slice", defaultServing: 1, category: "Grains" },
-  { id: 18, name: "Pasta (cooked)", cal: 220, protein: 8, carbs: 43, fat: 1.3, fiber: 2.5, unit: "g", defaultServing: 140, category: "Grains" },
-  { id: 19, name: "White Rice (cooked)", cal: 206, protein: 4, carbs: 45, fat: 0.4, fiber: 0.6, unit: "g", defaultServing: 186, category: "Grains" },
-  { id: 20, name: "Broccoli", cal: 31, protein: 2.6, carbs: 6, fat: 0.3, fiber: 2.6, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 21, name: "Spinach (raw)", cal: 23, protein: 2.9, carbs: 3.6, fat: 0.4, fiber: 2.2, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 22, name: "Kale", cal: 49, protein: 4.3, carbs: 9, fat: 0.9, fiber: 3.6, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 23, name: "Carrots", cal: 41, protein: 0.9, carbs: 10, fat: 0.2, fiber: 2.8, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 24, name: "Sweet Potato", cal: 86, protein: 1.6, carbs: 20, fat: 0.1, fiber: 3, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 25, name: "Tomato", cal: 18, protein: 0.9, carbs: 3.9, fat: 0.2, fiber: 1.2, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 26, name: "Cucumber", cal: 15, protein: 0.7, carbs: 3.6, fat: 0.1, fiber: 0.5, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 27, name: "Bell Pepper", cal: 31, protein: 1, carbs: 6, fat: 0.3, fiber: 2.1, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 28, name: "Avocado", cal: 160, protein: 2, carbs: 9, fat: 15, fiber: 6.7, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 29, name: "Zucchini", cal: 17, protein: 1.2, carbs: 3.1, fat: 0.3, fiber: 1, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 30, name: "Apple (medium)", cal: 95, protein: 0.5, carbs: 25, fat: 0.3, fiber: 4.4, unit: "apple", defaultServing: 1, category: "Fruit" },
-  { id: 31, name: "Banana (medium)", cal: 105, protein: 1.3, carbs: 27, fat: 0.4, fiber: 3.1, unit: "banana", defaultServing: 1, category: "Fruit" },
-  { id: 32, name: "Blueberries", cal: 84, protein: 1.1, carbs: 21, fat: 0.5, fiber: 3.6, unit: "g", defaultServing: 148, category: "Fruit" },
-  { id: 33, name: "Strawberries", cal: 49, protein: 1, carbs: 12, fat: 0.5, fiber: 3, unit: "g", defaultServing: 152, category: "Fruit" },
-  { id: 34, name: "Orange (medium)", cal: 62, protein: 1.2, carbs: 15, fat: 0.2, fiber: 3.1, unit: "orange", defaultServing: 1, category: "Fruit" },
-  { id: 35, name: "Grapes", cal: 104, protein: 1.1, carbs: 27, fat: 0.2, fiber: 1.4, unit: "g", defaultServing: 151, category: "Fruit" },
-  { id: 36, name: "Olive Oil", cal: 119, protein: 0, carbs: 0, fat: 13.5, fiber: 0, unit: "tbsp", defaultServing: 1, category: "Fats" },
-  { id: 37, name: "Almonds", cal: 164, protein: 6, carbs: 6, fat: 14, fiber: 3.5, unit: "g", defaultServing: 28, category: "Fats" },
-  { id: 38, name: "Walnuts", cal: 185, protein: 4.3, carbs: 3.9, fat: 18.5, fiber: 2, unit: "g", defaultServing: 28, category: "Fats" },
-  { id: 39, name: "Peanut Butter (natural)", cal: 188, protein: 8, carbs: 6, fat: 16, fiber: 1.9, unit: "tbsp", defaultServing: 2, category: "Fats" },
-  { id: 40, name: "Butter", cal: 102, protein: 0.1, carbs: 0, fat: 11.5, fiber: 0, unit: "tbsp", defaultServing: 1, category: "Fats" },
-  { id: 41, name: "Black Beans (cooked)", cal: 227, protein: 15, carbs: 41, fat: 0.9, fiber: 15, unit: "g", defaultServing: 172, category: "Legumes" },
-  { id: 42, name: "Lentils (cooked)", cal: 230, protein: 18, carbs: 40, fat: 0.8, fiber: 15.6, unit: "g", defaultServing: 198, category: "Legumes" },
-  { id: 43, name: "Hummus", cal: 70, protein: 2, carbs: 8, fat: 3, fiber: 2, unit: "tbsp", defaultServing: 2, category: "Legumes" },
-  { id: 44, name: "Whey Protein Powder", cal: 120, protein: 24, carbs: 3, fat: 1.5, fiber: 0, unit: "scoop", defaultServing: 1, category: "Protein" },
-  { id: 45, name: "Coffee (black)", cal: 2, protein: 0.3, carbs: 0, fat: 0, fiber: 0, unit: "cup", defaultServing: 1, category: "Other" },
-  { id: 46, name: "Edamame (shelled)", cal: 188, protein: 18.5, carbs: 14, fat: 8, fiber: 8, unit: "g", defaultServing: 155, category: "Legumes" },
-  { id: 47, name: "Sardines (in water)", cal: 149, protein: 21, carbs: 0, fat: 7, fiber: 0, unit: "g", defaultServing: 85, category: "Protein" },
-  { id: 48, name: "Tempeh", cal: 193, protein: 20, carbs: 9, fat: 11, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 49, name: "Chia Seeds", cal: 138, protein: 4.7, carbs: 12, fat: 8.7, fiber: 11, unit: "tbsp", defaultServing: 2, category: "Fats" },
-  { id: 50, name: "Dark Chocolate (85%)", cal: 170, protein: 2, carbs: 13, fat: 12, fiber: 3, unit: "g", defaultServing: 30, category: "Other" },
-  { id: 51, name: "Cod (cooked)", cal: 90, protein: 19, carbs: 0, fat: 0.8, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 52, name: "Halibut (cooked)", cal: 111, protein: 23, carbs: 0, fat: 2.3, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 53, name: "Tilapia (cooked)", cal: 111, protein: 23, carbs: 0, fat: 2.3, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 54, name: "Trout (cooked)", cal: 150, protein: 23, carbs: 0, fat: 6, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 55, name: "Mackerel (cooked)", cal: 205, protein: 19, carbs: 0, fat: 14, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 56, name: "Crab (cooked)", cal: 97, protein: 20, carbs: 0, fat: 1.5, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 57, name: "Scallops (cooked)", cal: 111, protein: 21, carbs: 5, fat: 0.8, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 58, name: "Mussels (cooked)", cal: 172, protein: 24, carbs: 7, fat: 4.5, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 59, name: "Duck Breast (cooked)", cal: 201, protein: 28, carbs: 0, fat: 10, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 60, name: "Pork Tenderloin (cooked)", cal: 136, protein: 24, carbs: 0, fat: 3.9, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 61, name: "Lamb (lean, cooked)", cal: 218, protein: 25, carbs: 0, fat: 13, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 62, name: "Beef Sirloin (cooked)", cal: 207, protein: 30, carbs: 0, fat: 9, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 63, name: "Egg White", cal: 17, protein: 3.6, carbs: 0.2, fat: 0.1, fiber: 0, unit: "egg white", defaultServing: 1, category: "Protein" },
-  { id: 64, name: "Smoked Salmon", cal: 117, protein: 18, carbs: 0, fat: 4.3, fiber: 0, unit: "g", defaultServing: 100, category: "Protein" },
-  { id: 65, name: "Oysters (cooked)", cal: 79, protein: 9, carbs: 4.7, fat: 2.5, fiber: 0, unit: "g", defaultServing: 85, category: "Protein" },
-  { id: 66, name: "Asparagus", cal: 20, protein: 2.2, carbs: 3.7, fat: 0.2, fiber: 2.1, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 67, name: "Brussels Sprouts", cal: 43, protein: 3.4, carbs: 9, fat: 0.3, fiber: 3.8, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 68, name: "Cauliflower", cal: 25, protein: 1.9, carbs: 5, fat: 0.3, fiber: 2, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 69, name: "Green Beans", cal: 31, protein: 1.8, carbs: 7, fat: 0.1, fiber: 3.4, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 70, name: "Mushrooms (white)", cal: 22, protein: 3.1, carbs: 3.3, fat: 0.3, fiber: 1, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 71, name: "Eggplant", cal: 25, protein: 1, carbs: 6, fat: 0.2, fiber: 3, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 72, name: "Cabbage", cal: 25, protein: 1.3, carbs: 5.8, fat: 0.1, fiber: 2.5, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 73, name: "Beets", cal: 43, protein: 1.6, carbs: 9.6, fat: 0.2, fiber: 2.8, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 74, name: "Artichoke (cooked)", cal: 64, protein: 3.5, carbs: 14, fat: 0.4, fiber: 7, unit: "g", defaultServing: 120, category: "Vegetables" },
-  { id: 75, name: "Bok Choy", cal: 13, protein: 1.5, carbs: 2.2, fat: 0.2, fiber: 1, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 76, name: "Celery", cal: 16, protein: 0.7, carbs: 3, fat: 0.2, fiber: 1.6, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 77, name: "Leeks", cal: 61, protein: 1.5, carbs: 14, fat: 0.3, fiber: 1.8, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 78, name: "Romaine Lettuce", cal: 17, protein: 1.2, carbs: 3.3, fat: 0.3, fiber: 2.1, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 79, name: "Arugula", cal: 25, protein: 2.6, carbs: 3.7, fat: 0.7, fiber: 1.6, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 80, name: "Snow Peas", cal: 42, protein: 2.8, carbs: 7.5, fat: 0.2, fiber: 2.6, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 81, name: "Corn (kernels)", cal: 86, protein: 3.2, carbs: 19, fat: 1.2, fiber: 2.4, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 82, name: "Onion", cal: 40, protein: 1.1, carbs: 9.3, fat: 0.1, fiber: 1.7, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 83, name: "Butternut Squash", cal: 45, protein: 1, carbs: 12, fat: 0.1, fiber: 2, unit: "g", defaultServing: 100, category: "Vegetables" },
-  { id: 84, name: "Rice Cakes (plain)", cal: 35, protein: 0.7, carbs: 7.3, fat: 0.3, fiber: 0.3, unit: "cake", defaultServing: 1, category: "Snacks" },
-  { id: 85, name: "Popcorn (air-popped)", cal: 31, protein: 1, carbs: 6.2, fat: 0.4, fiber: 3.6, unit: "g", defaultServing: 28, category: "Snacks" },
-  { id: 86, name: "Mixed Nuts", cal: 173, protein: 5, carbs: 6, fat: 16, fiber: 2.5, unit: "g", defaultServing: 28, category: "Snacks" },
-  { id: 87, name: "Cashews", cal: 157, protein: 5.2, carbs: 9, fat: 12, fiber: 0.9, unit: "g", defaultServing: 28, category: "Snacks" },
-  { id: 88, name: "Pumpkin Seeds", cal: 151, protein: 8.6, carbs: 5, fat: 13, fiber: 1.7, unit: "g", defaultServing: 28, category: "Snacks" },
-  { id: 89, name: "Sunflower Seeds", cal: 166, protein: 5.5, carbs: 6.5, fat: 14, fiber: 2.4, unit: "g", defaultServing: 28, category: "Snacks" },
-  { id: 90, name: "String Cheese (1 stick)", cal: 80, protein: 7, carbs: 1, fat: 5, fiber: 0, unit: "stick", defaultServing: 1, category: "Snacks" },
-  { id: 91, name: "Babybel Cheese (1 wheel)", cal: 70, protein: 5, carbs: 0, fat: 6, fiber: 0, unit: "wheel", defaultServing: 1, category: "Snacks" },
-  { id: 92, name: "Celery with Peanut Butter", cal: 110, protein: 4, carbs: 6, fat: 8.5, fiber: 2, unit: "serving", defaultServing: 1, category: "Snacks" },
-  { id: 93, name: "Apple with Almond Butter", cal: 190, protein: 3.5, carbs: 27, fat: 8.5, fiber: 6, unit: "serving", defaultServing: 1, category: "Snacks" },
-  { id: 94, name: "Hard Boiled Egg", cal: 78, protein: 6.3, carbs: 0.6, fat: 5.3, fiber: 0, unit: "egg", defaultServing: 1, category: "Snacks" },
-  { id: 95, name: "Protein Bar (~200 cal)", cal: 200, protein: 20, carbs: 22, fat: 7, fiber: 5, unit: "bar", defaultServing: 1, category: "Snacks" },
-  { id: 96, name: "Crackers (whole grain, 5 pcs)", cal: 80, protein: 2, carbs: 14, fat: 2, fiber: 2, unit: "serving", defaultServing: 1, category: "Snacks" },
-  { id: 97, name: "Mango (sliced)", cal: 99, protein: 1.4, carbs: 25, fat: 0.6, fiber: 2.6, unit: "g", defaultServing: 165, category: "Snacks" },
-  { id: 98, name: "Medjool Dates (1)", cal: 66, protein: 0.4, carbs: 18, fat: 0, fiber: 1.6, unit: "date", defaultServing: 1, category: "Snacks" },
-  { id: 99, name: "Scrambled Eggs (2 eggs)", cal: 148, protein: 10, carbs: 1.6, fat: 10, fiber: 0, unit: "serving", defaultServing: 1, category: "Breakfast" },
-  { id: 100, name: "Overnight Oats (basic)", cal: 215, protein: 8, carbs: 34, fat: 5, fiber: 5, unit: "serving", defaultServing: 1, category: "Breakfast" },
-  { id: 101, name: "Smoothie (protein, basic)", cal: 230, protein: 24, carbs: 22, fat: 4, fiber: 3, unit: "serving", defaultServing: 1, category: "Breakfast" },
-  { id: 102, name: "Granola (low sugar)", cal: 200, protein: 5, carbs: 32, fat: 7, fiber: 4, unit: "g", defaultServing: 50, category: "Breakfast" },
-  { id: 103, name: "Whole Grain Pancake", cal: 92, protein: 3, carbs: 15, fat: 2.5, fiber: 1.5, unit: "pancake", defaultServing: 1, category: "Breakfast" },
-  { id: 104, name: "Bagel (whole wheat)", cal: 245, protein: 10, carbs: 48, fat: 1.5, fiber: 4, unit: "bagel", defaultServing: 1, category: "Breakfast" },
-  { id: 105, name: "Cream Cheese (light, 2 tbsp)", cal: 60, protein: 2.5, carbs: 2, fat: 5, fiber: 0, unit: "serving", defaultServing: 1, category: "Breakfast" },
-  { id: 106, name: "English Muffin (whole wheat)", cal: 134, protein: 5.5, carbs: 26, fat: 1.5, fiber: 3, unit: "muffin", defaultServing: 1, category: "Breakfast" },
-  { id: 107, name: "Acai Bowl (base)", cal: 200, protein: 3, carbs: 38, fat: 6, fiber: 5, unit: "serving", defaultServing: 1, category: "Breakfast" },
-  { id: 108, name: "Bran Cereal (1/2 cup)", cal: 83, protein: 2.7, carbs: 23, fat: 0.5, fiber: 6, unit: "serving", defaultServing: 1, category: "Breakfast" },
-  { id: 109, name: "Almond Milk (unsweetened)", cal: 30, protein: 1, carbs: 1, fat: 2.5, fiber: 0.5, unit: "ml", defaultServing: 240, category: "Breakfast" },
-  { id: 110, name: "Smoked Salmon & Cream Cheese on Toast", cal: 280, protein: 18, carbs: 26, fat: 10, fiber: 2, unit: "serving", defaultServing: 1, category: "Breakfast" },
-  { id: 111, name: "Avocado Roll (6 pieces)", cal: 170, protein: 3, carbs: 32, fat: 4, fiber: 5, unit: "roll", defaultServing: 1, category: "Sushi" },
-  { id: 112, name: "Tuna Nigiri", cal: 60, protein: 7, carbs: 8, fat: 0.5, fiber: 0.2, unit: "piece", defaultServing: 1, category: "Sushi" },
-  { id: 113, name: "Sockeye Salmon Nigiri", cal: 65, protein: 6, carbs: 8, fat: 1.5, fiber: 0.2, unit: "piece", defaultServing: 1, category: "Sushi" },
-  { id: 114, name: "Tuna Sashimi", cal: 40, protein: 8, carbs: 0, fat: 0.5, fiber: 0, unit: "piece", defaultServing: 1, category: "Sushi" },
-  { id: 115, name: "Sockeye Salmon Sashimi", cal: 45, protein: 7, carbs: 0, fat: 1.5, fiber: 0, unit: "piece", defaultServing: 1, category: "Sushi" },
-  { id: 116, name: "Miso Soup", cal: 40, protein: 3, carbs: 5, fat: 1, fiber: 1, unit: "bowl", defaultServing: 1, category: "Sushi" },
-  { id: 117, name: "Ponzu Sauce", cal: 15, protein: 0.5, carbs: 3, fat: 0, fiber: 0, unit: "tbsp", defaultServing: 1, category: "Sushi" },
-  { id: 118, name: "Premier Protein Shake – Chocolate", cal: 160, protein: 30, carbs: 5, fat: 3, fiber: 3, unit: "bottle", defaultServing: 1, category: "Protein" },
-  { id: 119, name: "Canadian Bacon (1 slice)", cal: 30, protein: 5, carbs: 0.3, fat: 1, fiber: 0, unit: "slice", defaultServing: 1, category: "Protein" },
-  { id: 120, name: "Hollandaise Sauce", cal: 80, protein: 0.5, carbs: 0.5, fat: 8.5, fiber: 0, unit: "tbsp", defaultServing: 2, category: "Other" },
-  { id: 121, name: "Natura Fibre (Brightside Organics)", cal: 120, protein: 4, carbs: 14, fat: 9, fiber: 14, unit: "g", defaultServing: 30, category: "Other" },
-];
-
-// ── Exercise Library ──────────────────────────────────────────────────────────
-const EXERCISE_LIBRARY = [
-  { name: "Walking (moderate, 3 mph)", calPerMin: 3.5 },
-  { name: "Walking (brisk, 4 mph)", calPerMin: 4.5 },
-  { name: "Running (5 mph)", calPerMin: 7.5 },
-  { name: "Running (6+ mph)", calPerMin: 10 },
-  { name: "Cycling (moderate)", calPerMin: 6 },
-  { name: "Cycling (vigorous)", calPerMin: 10 },
-  { name: "Swimming (laps)", calPerMin: 7 },
-  { name: "Yoga", calPerMin: 2.8 },
-  { name: "Pilates", calPerMin: 3.5 },
-  { name: "Lagree (Megaformer)", calPerMin: 6.5 },
-  { name: "Strength: Upper Push – Shoulders, Chest, Triceps (Tue)", calPerMin: 3.8 },
-  { name: "Strength: Legs – Press, Squats, RDLs, Curls (Wed)", calPerMin: 4.5 },
-  { name: "Strength: Upper Pull – Back, Biceps (Thu)", calPerMin: 3.8 },
-  { name: "HIIT", calPerMin: 9 },
-  { name: "Elliptical (moderate)", calPerMin: 5.5 },
-  { name: "Rowing Machine", calPerMin: 7.5 },
-  { name: "Dance / Zumba", calPerMin: 5.5 },
-  { name: "Hiking", calPerMin: 5.5 },
-  { name: "Barre", calPerMin: 4 },
-  { name: "Stretching", calPerMin: 2 },
-];
-
-// ── Meal Plans ────────────────────────────────────────────────────────────────
-const MEAL_PLANS = [
-  { id: 1, name: "Lagree Morning", mealType: "Breakfast" as Meal, badge: "Workout Day", description: "Quick, no-cook high-protein start for training days.", items: [{ foodId: 118, servingAmount: 1 }, { foodId: 94, servingAmount: 1 }, { foodId: 45, servingAmount: 1 }] },
-  { id: 2, name: "Smoked Salmon Plate", mealType: "Breakfast" as Meal, badge: "Galveston", description: "Anti-inflammatory omega-3 rich breakfast. High protein, near-zero net carbs.", items: [{ foodId: 64, servingAmount: 80 }, { foodId: 63, servingAmount: 3 }, { foodId: 26, servingAmount: 100 }, { foodId: 105, servingAmount: 1 }] },
-  { id: 3, name: "Greek Protein Bowl", mealType: "Breakfast" as Meal, badge: "High Fibre", description: "Probiotic-rich with excellent fibre for gut health during menopause.", items: [{ foodId: 4, servingAmount: 170 }, { foodId: 32, servingAmount: 75 }, { foodId: 49, servingAmount: 2 }, { foodId: 121, servingAmount: 15 }] },
-  { id: 4, name: "Weekend Eggs Benedict", mealType: "Breakfast" as Meal, badge: "Weekend Treat", description: "Your Eggs Benny with cheese. Higher-carb day — pair with low-carb meals.", items: [{ foodId: 106, servingAmount: 1 }, { foodId: 3, servingAmount: 2 }, { foodId: 12, servingAmount: 28 }, { foodId: 120, servingAmount: 2 }] },
-  { id: 5, name: "Salmon Avocado Bowl", mealType: "Lunch" as Meal, badge: "Galveston", description: "Omega-3 rich anti-inflammatory powerhouse. The ideal Galveston lunch.", items: [{ foodId: 2, servingAmount: 120 }, { foodId: 21, servingAmount: 100 }, { foodId: 28, servingAmount: 80 }, { foodId: 26, servingAmount: 100 }, { foodId: 36, servingAmount: 1 }] },
-  { id: 6, name: "Tuna Avocado Bowl", mealType: "Lunch" as Meal, badge: "Low Carb", description: "Very low net carbs — great for days after a higher-carb breakfast.", items: [{ foodId: 7, servingAmount: 100 }, { foodId: 28, servingAmount: 100 }, { foodId: 78, servingAmount: 100 }, { foodId: 76, servingAmount: 100 }, { foodId: 36, servingAmount: 1 }] },
-  { id: 7, name: "Sushi Favourite", mealType: "Lunch" as Meal, badge: "Sushi Day", description: "Your go-to order. Higher-carb — best with low-carb breakfast and dinner.", items: [{ foodId: 112, servingAmount: 2 }, { foodId: 113, servingAmount: 2 }, { foodId: 114, servingAmount: 4 }, { foodId: 116, servingAmount: 1 }, { foodId: 117, servingAmount: 2 }] },
-  { id: 8, name: "Chicken & Greens", mealType: "Dinner" as Meal, badge: "Galveston", description: "Classic Galveston dinner. High protein, anti-inflammatory, simple.", items: [{ foodId: 1, servingAmount: 150 }, { foodId: 20, servingAmount: 150 }, { foodId: 66, servingAmount: 100 }, { foodId: 36, servingAmount: 1 }] },
-  { id: 9, name: "Salmon & Roasted Veg", mealType: "Dinner" as Meal, badge: "Anti-Inflammatory", description: "Fatty fish + cruciferous veg — ideal for menopausal hormonal balance.", items: [{ foodId: 2, servingAmount: 150 }, { foodId: 68, servingAmount: 150 }, { foodId: 69, servingAmount: 100 }, { foodId: 40, servingAmount: 1 }] },
-  { id: 10, name: "Sirloin & Brussels", mealType: "Dinner" as Meal, badge: "Strength Day", description: "Higher protein for post-lifting recovery. Iron-rich for energy.", items: [{ foodId: 62, servingAmount: 120 }, { foodId: 67, servingAmount: 150 }, { foodId: 70, servingAmount: 100 }, { foodId: 36, servingAmount: 1 }] },
-  { id: 11, name: "Afternoon Snack", mealType: "Snacks" as Meal, badge: "Quick", description: "Balanced fat and protein to hold you to dinner without spiking blood sugar.", items: [{ foodId: 37, servingAmount: 28 }, { foodId: 90, servingAmount: 1 }] },
-  { id: 12, name: "Fibre Boost Bowl", mealType: "Snacks" as Meal, badge: "High Fibre", description: "Natura Fibre in yogurt with berries. Hits fibre target without blowing net carbs.", items: [{ foodId: 121, servingAmount: 15 }, { foodId: 4, servingAmount: 170 }, { foodId: 33, servingAmount: 75 }] },
-];
+const EMPTY_FOOD = { name: "", unit: "g", defaultServing: "100", cal: "", protein: "", carbs: "", fat: "", fiber: "" };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const r = (n: number, d = 1) => Math.round(n * Math.pow(10, d)) / Math.pow(10, d);
@@ -215,6 +47,36 @@ export default function NutriTracker({ user }: { user: User }) {
   const [historyEx, setHistoryEx] = useState<ExerciseEntry[]>([]);
   const [historyDates, setHistoryDates] = useState<string[]>([]);
   const [apiError, setApiError] = useState(false);
+
+  // The catalog lives in the database and is fetched once per session.
+  const [foods, setFoods] = useState<Food[]>([]);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
+  const [newFood, setNewFood] = useState<typeof EMPTY_FOOD | null>(null);
+
+  useEffect(() => {
+    api.catalog.load()
+      .then(c => { setFoods(c.foods); setExercises(c.exercises); setMealPlans(c.mealPlans); })
+      .catch(() => setApiError(true));
+  }, []);
+
+  const saveCustomFood = async () => {
+    if (!newFood || !newFood.name.trim()) return;
+    const num = (v: string) => parseFloat(v) || 0;
+    try {
+      const saved = await api.catalog.addFood({
+        name: newFood.name, unit: newFood.unit || "g", defaultServing: num(newFood.defaultServing) || 100, category: "My Foods",
+        cal: num(newFood.cal), protein: num(newFood.protein), carbs: num(newFood.carbs), fat: num(newFood.fat), fiber: num(newFood.fiber),
+      });
+      setFoods(p => [...p, saved]);
+      setNewFood(null);
+      flash("Food saved");
+    } catch (e) { flash(e instanceof Error ? e.message : "Error saving food"); }
+  };
+
+  const deleteCustomFood = async (id: number) => {
+    try { await api.catalog.deleteFood(id); setFoods(p => p.filter(f => f.id !== id)); } catch { flash("Error deleting food"); }
+  };
 
   const flash = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 2200); };
 
@@ -299,7 +161,7 @@ export default function NutriTracker({ user }: { user: User }) {
 
   const addExercise = async () => {
     if (!exerciseName || !exerciseDuration) return;
-    const lib = EXERCISE_LIBRARY.find(e => e.name === exerciseName);
+    const lib = exercises.find(e => e.name === exerciseName);
     const cal = lib ? Math.round(lib.calPerMin * parseFloat(exerciseDuration)) : parseInt(customCal) || 0;
     const entry: Omit<ExerciseEntry, "id"> = { date, name: exerciseName, duration: `${exerciseDuration} min`, cal };
     try {
@@ -314,9 +176,9 @@ export default function NutriTracker({ user }: { user: User }) {
     try { await api.exercise.delete(id); setExerciseLog(p => p.filter(e => e.id !== id)); } catch { flash("Error deleting entry"); }
   };
 
-  const logRecipe = async (recipe: typeof MEAL_PLANS[0]) => {
+  const logRecipe = async (recipe: MealPlan) => {
     const entries: Omit<FoodEntry, "id">[] = recipe.items.map(item => {
-      const food = FOOD_LIBRARY.find(f => f.id === item.foodId)!;
+      const food = foods.find(f => f.id === item.foodId)!;
       const m = item.servingAmount / food.defaultServing;
       return { date, meal: recipe.mealType, food_name: food.name, amount: `${item.servingAmount} ${food.unit}`, cal: Math.round(food.cal * m), protein: r(food.protein * m), carbs: r(food.carbs * m), fat: r(food.fat * m), fiber: r((food.fiber || 0) * m) };
     });
@@ -328,9 +190,9 @@ export default function NutriTracker({ user }: { user: User }) {
     } catch { flash("Error logging recipe"); }
   };
 
-  const filteredFoods = FOOD_LIBRARY.filter(f => f.name.toLowerCase().includes(search.toLowerCase()));
-  const filteredLib = FOOD_LIBRARY.filter(f => f.name.toLowerCase().includes(libSearch.toLowerCase()));
-  const filteredRecipes = mealFilter === "All" ? MEAL_PLANS : MEAL_PLANS.filter(r => r.mealType === mealFilter);
+  const filteredFoods = foods.filter(f => f.name.toLowerCase().includes(search.toLowerCase()));
+  const filteredLib = foods.filter(f => f.name.toLowerCase().includes(libSearch.toLowerCase()));
+  const filteredRecipes = mealFilter === "All" ? mealPlans : mealPlans.filter(r => r.mealType === mealFilter);
 
   // Sub-components
   const MacroBar = ({ label, current, target, color }: { label: string; current: number; target: number; color: string }) => {
@@ -564,7 +426,7 @@ export default function NutriTracker({ user }: { user: User }) {
               <label style={{ fontSize: 11, fontWeight: 700, color: C.muted, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>Activity</label>
               <select value={exerciseName} onChange={e => setExerciseName(e.target.value)} style={{ width: "100%", padding: "11px 14px", borderRadius: 10, border: `1.5px solid ${C.border}`, fontSize: 14, background: "white", marginBottom: 14 }}>
                 <option value="">Select activity...</option>
-                {EXERCISE_LIBRARY.map(e => <option key={e.name} value={e.name}>{e.name}</option>)}
+                {exercises.map(e => <option key={e.name} value={e.name}>{e.name}</option>)}
                 <option value="Other">Other (enter calories manually)</option>
               </select>
               <label style={{ fontSize: 11, fontWeight: 700, color: C.muted, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>Duration (minutes)</label>
@@ -574,7 +436,7 @@ export default function NutriTracker({ user }: { user: User }) {
                 <input type="number" value={customCal} onChange={e => setCustomCal(e.target.value)} placeholder="e.g. 200" style={{ width: "100%", padding: "11px 14px", borderRadius: 10, border: `1.5px solid ${C.border}`, fontSize: 14, marginBottom: 14 }} />
               </>}
               {exerciseName && exerciseDuration && exerciseName !== "Other" && (() => {
-                const lib = EXERCISE_LIBRARY.find(e => e.name === exerciseName);
+                const lib = exercises.find(e => e.name === exerciseName);
                 const est = lib ? Math.round(lib.calPerMin * parseFloat(exerciseDuration)) : 0;
                 return <div style={{ background: "#FFF5EF", borderRadius: 10, padding: "11px 14px", marginBottom: 14, display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 13, color: C.muted }}>Estimated burn</span><span style={{ fontSize: 18, fontWeight: 700, color: C.accent }}>−{est} cal</span></div>;
               })()}
@@ -595,7 +457,7 @@ export default function NutriTracker({ user }: { user: User }) {
             </div>
             {filteredRecipes.map(recipe => {
               const t = recipe.items.reduce((acc, item) => {
-                const food = FOOD_LIBRARY.find(f => f.id === item.foodId);
+                const food = foods.find(f => f.id === item.foodId);
                 if (!food) return acc;
                 const m = item.servingAmount / food.defaultServing;
                 return { cal: acc.cal + food.cal * m, protein: acc.protein + food.protein * m, carbs: acc.carbs + food.carbs * m, fat: acc.fat + food.fat * m, fiber: acc.fiber + (food.fiber || 0) * m };
@@ -614,7 +476,7 @@ export default function NutriTracker({ user }: { user: User }) {
                     ))}
                   </div>
                   {recipe.items.map(item => {
-                    const food = FOOD_LIBRARY.find(f => f.id === item.foodId);
+                    const food = foods.find(f => f.id === item.foodId);
                     if (!food) return null;
                     return <div key={item.foodId} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, color: C.muted, padding: "5px 0", borderBottom: `1px solid ${C.border}` }}><span>{food.name}</span><span style={{ color: C.text, fontWeight: 500 }}>{item.servingAmount} {food.unit}</span></div>;
                   })}
@@ -671,12 +533,29 @@ export default function NutriTracker({ user }: { user: User }) {
         {tab === "library" && (
           <div>
             <input type="text" placeholder="🔍  Search library..." value={libSearch} onChange={e => setLibSearch(e.target.value)} style={{ width: "100%", padding: "12px 16px", borderRadius: 14, border: `1.5px solid ${C.border}`, fontSize: 14, background: "white", marginBottom: 14, boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }} />
+            {!newFood && <button onClick={() => setNewFood(EMPTY_FOOD)} style={{ width: "100%", padding: 11, borderRadius: 12, border: `1.5px dashed ${C.primary}`, background: "none", color: C.primary, fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 12 }}>+ Add my own food</button>}
+            {newFood && (
+              <div style={{ background: "white", borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
+                <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 16, marginBottom: 10 }}>Add my own food</div>
+                <input aria-label="Food name" placeholder="Name" value={newFood.name} onChange={e => setNewFood({ ...newFood, name: e.target.value })} style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: `1.5px solid ${C.border}`, fontSize: 14, background: C.bg, marginBottom: 8 }} />
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+                  {([["defaultServing", "Serving size"], ["unit", "Unit (g, ml, piece…)"], ["cal", "Calories"], ["protein", "Protein (g)"], ["carbs", "Total carbs (g)"], ["fiber", "Fibre (g)"], ["fat", "Fat (g)"]] as const).map(([key, label]) => (
+                    <input key={key} aria-label={label} placeholder={label} type={key === "unit" ? "text" : "number"} min="0" value={newFood[key]} onChange={e => setNewFood({ ...newFood, [key]: e.target.value })} style={{ padding: "10px 12px", borderRadius: 9, border: `1.5px solid ${C.border}`, fontSize: 13.5, background: C.bg, minWidth: 0 }} />
+                  ))}
+                </div>
+                <div style={{ fontSize: 11, color: C.muted, marginBottom: 10 }}>Numbers are for one serving of the size you entered. Only you can see foods you add.</div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={saveCustomFood} style={{ flex: 1, padding: 11, borderRadius: 10, border: "none", background: C.primary, color: "white", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>Save food</button>
+                  <button onClick={() => setNewFood(null)} style={{ padding: "11px 16px", borderRadius: 10, border: `1.5px solid ${C.border}`, background: "white", fontSize: 13.5, cursor: "pointer" }}>Cancel</button>
+                </div>
+              </div>
+            )}
             {filteredLib.map(f => (
               <div key={f.id} style={{ background: "white", borderRadius: 14, padding: "14px 16px", marginBottom: 10, boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 600 }}>{f.name}</div>
-                    <div style={{ fontSize: 11.5, color: C.muted, marginTop: 2 }}>{f.category} · per {f.defaultServing} {f.unit}</div>
+                    <div style={{ fontSize: 11.5, color: C.muted, marginTop: 2 }}>{f.category} · per {f.defaultServing} {f.unit}{f.custom && <> · <button onClick={() => deleteCustomFood(f.id)} style={{ background: "none", border: "none", color: "#D64545", fontSize: 11.5, cursor: "pointer", padding: 0 }}>delete</button></>}</div>
                   </div>
                   <div style={{ fontWeight: 700, fontSize: 16, color: C.primary, fontFamily: "'DM Serif Display', serif" }}>{f.cal}</div>
                 </div>

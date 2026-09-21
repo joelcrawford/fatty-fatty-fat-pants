@@ -11,6 +11,7 @@ import { createAuthRouter } from "./routes/auth";
 import { createFoodRouter } from "./routes/food";
 import { createExerciseRouter } from "./routes/exercise";
 import { createSummaryRouter } from "./routes/summary";
+import { createCatalogRouter } from "./routes/catalog";
 
 /**
  * Build the Express app around a database connection.
@@ -70,6 +71,7 @@ export function createApp(db: Db, deps: AppDeps = {}): express.Express {
   app.use("/api/food", createFoodRouter(db));
   app.use("/api/exercise", createExerciseRouter(db));
   app.use("/api/summary", createSummaryRouter(db));
+  app.use("/api", createCatalogRouter(db)); // /api/foods, /api/exercises, /api/meal-plans
 
   // 404 handler
   app.use((_req, res) => {

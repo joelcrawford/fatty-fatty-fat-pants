@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
+import { seedCatalog } from "./seed";
 
 export type Db = Database.Database;
 
@@ -77,7 +78,7 @@ export function migrate(db: Db, migrations: Migration[] = loadMigrations()): num
 }
 
 /**
- * Open a database and bring its schema up to date.
+ * Open a database, bring its schema up to date, and sync the built-in catalog.
  *
  * Pass ":memory:" for a throwaway database (tests). Nothing in this module
  * opens a connection at import time, so importing it has no side effects.
@@ -96,6 +97,7 @@ export function openDatabase(filename: string = DEFAULT_DB_PATH): Db {
   db.pragma("foreign_keys = ON");
 
   migrate(db);
+  seedCatalog(db);
 
   return db;
 }

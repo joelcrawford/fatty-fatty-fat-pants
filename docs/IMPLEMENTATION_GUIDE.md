@@ -27,7 +27,8 @@ nutrition-tracker/
 │   │   ├── __tests__/        Jest + supertest suites (in-memory SQLite)
 │   │   ├── db/
 │   │   │   ├── index.ts      SQLite connection + migration runner
-│   │   │   └── migrations/   Numbered .sql files, applied once each, in order
+│   │   │   ├── migrations/   Numbered .sql files, applied once each, in order
+│   │   │   └── seed/         catalog.json (built-in foods, exercises, meal plans) + seeder
 │   │   ├── auth/             Password hashing, tokens, requireAuth, mailer, invites
 │   │   ├── config.ts         Environment → typed config (fails fast in production)
 │   │   ├── validation.ts     zod schemas + validate() middleware
@@ -231,48 +232,43 @@ The first account on a new server is created the same way.
 ### Database migrations
 `backend/src/db/migrations/NNNN_name.sql`, applied in order on startup, each in its own transaction, each recorded in the `schema_migrations` table so it runs exactly once. **Never edit a migration that has shipped; add a new file.** A migration that fails, or that leaves a dangling foreign key, rolls back completely and stops the server from starting.
 
-### Why is the food library hardcoded in the frontend?
-The 121-item library is static data that doesn't change frequently. It was bundled into the frontend for simplicity and instant search performance with no network round-trip. When the custom food entry feature is built (future), it will query the `custom_foods` table via the API, and the two sources can be merged in the UI.
+### Where the food, exercise and meal-plan catalog lives
+In the database, served by `/api/foods`, `/api/exercises` and `/api/meal-plans`, so the web app and the mobile app share one catalog and custom foods and barcode lookups have somewhere to go. Built-in rows are defined in `backend/src/db/seed/catalog.json` and synced into the database on every start (see sections 7 and 8). Custom foods sit in the same `foods` table with a `user_id`, and are visible only to their owner. Clients still get instant search: the catalog is small enough to fetch whole and filter locally.
 
 ---
 
-## 7. Adding New Food Items
+## 7. Adding or Correcting Built-in Foods
 
-Currently done in `src/App.tsx` in the `FOOD_LIBRARY` array. Each item follows this shape:
+Edit `backend/src/db/seed/catalog.json` and restart the API. Rows are matched by `seed_key` and updated in place, so a corrected macro reaches databases that already exist, ids never change, and users' custom foods are never touched.
 
-```typescript
-{
-  id: number,          // Sequential, must be unique
-  name: string,        // Display name
-  cal: number,         // Per defaultServing
-  protein: number,     // grams per defaultServing
-  carbs: number,       // grams per defaultServing (total, not net)
-  fat: number,         // grams per defaultServing
-  fiber: number,       // grams per defaultServing (critical for net carb calc)
-  unit: string,        // "g" | "ml" | "cup" | "piece" | etc.
-  defaultServing: number, // The quantity the macros are based on
-  category: string,    // Display grouping
-}
+```json
+{ "seed_key": "food-122", "name": "Walnut Butter", "category": "Fats", "unit": "tbsp", "default_serving": 2,
+  "cal": 200, "protein": 5, "carbs": 4, "fat": 19, "fiber": 2 }
 ```
 
-Fiber must always be filled in — even if zero. Leaving it undefined breaks net carb calculation.
+- `seed_key` must be new and is permanent. **Never reuse or renumber one.** Renaming a food is fine; changing its key creates a second food.
+- Macros are per `default_serving` of `unit`. `carbs` is total, not net.
+- `fiber` must always be present, even if zero: it is what net carbs is calculated from.
+- Removing an entry from the file does not delete the row (something may refer to it).
+- `npm test` checks the file: unique keys, no negative numbers, fibre not exceeding carbs, and every meal-plan item naming a food that exists. A broken file stops the server from starting rather than half-applying.
+
+Users add their own foods in the app (Library → "Add my own food"), which needs no deploy.
 
 ---
 
 ## 8. Adding New Exercise Types
 
-In `src/App.tsx`, add to the `EXERCISE_LIBRARY` array:
+In the same file, under `exercises`:
 
-```typescript
-{ name: "Your Activity Name", calPerMin: X }
+```json
+{ "seed_key": "exercise-kayaking", "name": "Kayaking", "met": 5.0 }
 ```
 
-`calPerMin` is calibrated for this user's body weight (134 lbs / 60.8 kg). To calculate for a new activity, use the MET formula:
+Exercises store a **MET** value rather than calories per minute, because calories depend on who is exercising:
 ```
 cal/min = (MET × 3.5 × bodyWeightKg) / 200
 ```
-
-Common METs: walking 3.5, cycling 8, swimming 8, yoga 3, weight training 5, Lagree ~7.5.
+Common METs: walking 3.5, cycling 8, swimming 8, yoga 3, weight training 5. The values shipped were derived from the original app's per-minute figures and reproduce them exactly at its reference weight (60.8 kg); per-user weight arrives with profiles (#15).
 
 ---
 
@@ -445,7 +441,7 @@ SQLite databases in WAL mode are safe to copy while the server is running.
 ## 15. Known Limitations (v1)
 
 - The web app keeps its refresh token in `localStorage` so a reload stays logged in. That is readable by any script on the origin; the reasoning and mitigations are written up at the bottom of `frontend/src/session.ts`. The mobile app will use the device's secure storage instead
-- Food library is static — editing requires a code change and redeploy
+- Built-in foods are edited in `catalog.json` and need a restart; users can add their own foods in the app. Custom foods cannot yet be edited, only deleted and re-added
 - No barcode scanner — manual food search only
 - History date chips show dates with food logged; gaps are normal
 - Exercise calorie estimates are approximations based on MET values, not a heart rate monitor
