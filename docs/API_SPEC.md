@@ -171,6 +171,37 @@ Adds a custom food. `name` and all five macros are **required** (a food saved wi
 ### DELETE /api/foods/:id
 Custom foods only. **403** for a built-in food. **404** for an unknown id *and* for another user's food, which are deliberately indistinguishable. Entries already logged from the food are unaffected: the log keeps its own copy of the name and macros.
 
+### GET /api/foods/barcode/:barcode
+Looks a packaged food up by its barcode. Accepts GTIN-8, UPC-A (12), EAN-13 and GTIN-14; the check digit is verified, so most misreads are a **400** before anything is looked up. A 12-digit UPC and the same number with a leading zero are treated as one barcode.
+
+Looks in three places, in order: **the caller's own custom foods** (if you saved this barcode, perhaps after fixing the numbers, your version always wins), a shared cache, then [Open Food Facts](https://world.openfoodfacts.org). The result is **not saved**: show it for confirmation, then log it, or save it with `POST /api/foods` (the `food` object minus `id` and `custom` is a valid body).
+
+```json
+{
+  "source": "openfoodfacts",
+  "barcode": "0016000275287",
+  "food": { "id": null, "name": "Cheerios", "category": "Packaged", "unit": "g", "default_serving": 100,
+            "cal": 359, "protein": 12.8, "carbs": 74.4, "fat": 6.4, "fiber": 10.3, "barcode": "0016000275287", "custom": false },
+  "brand": "Cheerios",
+  "suggested_serving": 39,
+  "missing": [],
+  "carbs_basis": "label_total",
+  "plausible": true
+}
+```
+| Field | Meaning |
+|---|---|
+| `source` | `openfoodfacts`, or `custom` when it is the caller's own food (then `food.id` is set and the extra fields below are absent) |
+| `food` | Per **100 g or 100 ml**, the one basis every product has |
+| `suggested_serving` | The pack's own serving in `food.unit`, to pre-fill the amount. `null` if unknown |
+| `missing` | Values the database lacked, reported as `0`. Ask the user to fill these in. May include `name` |
+| `carbs_basis` | `label_total` or `label_net_plus_fibre`. See below |
+| `plausible` | `false` when the numbers cannot be right (macros far over 100 g per 100 g). Warn the user |
+
+**Why `carbs_basis` exists.** "Carbohydrate" on a US or Canadian label **includes** fibre. In the EU, UK, Australia and most other places it **excludes** it. This app computes net carbs as `carbs − fiber`, so a European figure used as-is would have its fibre subtracted twice. `food.carbs` is therefore always a **total**: for non-North-American products the fibre is added back. The region comes from the product's listed countries, which is a heuristic, so a client may want to show "check the carbs" when it is `label_net_plus_fibre` and fibre is high.
+
+**404** no such product, or it is listed with no nutrition data (the message says which, and suggests adding it by hand) · **502** Open Food Facts could not be reached and there is no cached copy · **429** more than 60 lookups in 10 minutes for one user. Found products are cached for 30 days and misses for 1 day; if the upstream is down, an expired cached product is served rather than failing.
+
 ### GET /api/exercises
 ```json
 { "id": 10, "name": "Lagree (Megaformer)", "met": 6.109, "cal_per_min": 6.5, "cal_per_min_weight_kg": 60.8 }
@@ -600,7 +631,8 @@ These are enforced in the frontend only (not the API). Included here for referen
 | 409 | Email already registered |
 | 404 | Resource not found |
 | 413 | Request body too large (limit 100 KB) |
-| 429 | Too many attempts on the public auth endpoints |
+| 429 | Too many attempts on the public auth endpoints, or too many barcode lookups |
+| 502 | The product database could not be reached |
 | 500 | Internal server error — check PM2 logs |
 
 All 4xx and 5xx responses include `{ "success": false, "error": "..." }`.
@@ -613,6 +645,5 @@ These endpoints do not exist yet but are planned as part of future feature devel
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/api/foods/barcode/:barcode` | Look up food by barcode (Open Food Facts proxy) |
 | GET | `/api/summary/weekly` | 7-day rolling averages |
 | GET | `/api/summary/export?start=&end=` | CSV export for dietitian |

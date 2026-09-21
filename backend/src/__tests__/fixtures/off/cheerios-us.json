@@ -1,0 +1,33 @@
+{
+  "_note": "Real Open Food Facts response captured 2026-09-20, nutriments trimmed to the keys the app reads.",
+  "code": "0016000275287",
+  "status": 1,
+  "status_verbose": "product found",
+  "product": {
+    "brands": "Cheerios",
+    "code": "0016000275287",
+    "countries_tags": [
+      "en:united-states"
+    ],
+    "nutriments": {
+      "energy-kcal_100g": 358.974358974359,
+      "energy_100g": 1801.28205128205,
+      "energy-kj_100g": 1801.28205128205,
+      "proteins_100g": 12.8205128205128,
+      "carbohydrates_100g": 74.3589743589744,
+      "fat_100g": 6.41025641025641,
+      "fiber_100g": 10.2564102564103,
+      "sugars_100g": 5.12820512820513
+    },
+    "nutrition_data": "on",
+    "nutrition_data_per": "100g",
+    "nutrition_data_prepared_per": "100g",
+    "product_name": "Cheerios",
+    "product_quantity": 510.29141625,
+    "product_quantity_unit": "g",
+    "quantity": "18 oz (510 g)",
+    "serving_quantity": 39,
+    "serving_quantity_unit": "g",
+    "serving_size": "39g"
+  }
+}

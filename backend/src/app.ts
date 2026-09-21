@@ -12,6 +12,8 @@ import { createFoodRouter } from "./routes/food";
 import { createExerciseRouter } from "./routes/exercise";
 import { createSummaryRouter } from "./routes/summary";
 import { createCatalogRouter } from "./routes/catalog";
+import { createBarcodeRouter } from "./routes/barcode";
+import { ProductLookup, createOffLookup } from "./barcode/openFoodFacts";
 
 /**
  * Build the Express app around a database connection.
@@ -23,11 +25,14 @@ import { createCatalogRouter } from "./routes/catalog";
 export interface AppDeps {
   config?: Config;
   mailer?: Mailer;
+  /** Barcode → product. Defaults to the real Open Food Facts; tests pass a fake. */
+  lookupProduct?: ProductLookup;
 }
 
 export function createApp(db: Db, deps: AppDeps = {}): express.Express {
   const config = deps.config ?? loadConfig();
   const mailer = deps.mailer ?? createMailer(config.mail);
+  const lookupProduct = deps.lookupProduct ?? createOffLookup(config.offUserAgent);
 
   const app = express();
 
@@ -71,6 +76,7 @@ export function createApp(db: Db, deps: AppDeps = {}): express.Express {
   app.use("/api/food", createFoodRouter(db));
   app.use("/api/exercise", createExerciseRouter(db));
   app.use("/api/summary", createSummaryRouter(db));
+  app.use("/api", createBarcodeRouter(db, config, lookupProduct)); // /api/foods/barcode/:barcode
   app.use("/api", createCatalogRouter(db)); // /api/foods, /api/exercises, /api/meal-plans
 
   // 404 handler

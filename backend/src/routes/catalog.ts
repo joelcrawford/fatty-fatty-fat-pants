@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { Db } from "../db";
 import { loadCatalogSeed } from "../db/seed";
 import { currentUserId } from "../auth/middleware";
+import { canonicalBarcode } from "../barcode/gtin";
 import { validate, idParams, customFoodSchema, foodSearchQuery, CustomFoodInput } from "../validation";
 
 interface FoodRow {
@@ -64,7 +65,7 @@ export function createCatalogRouter(db: Db): Router {
       const { lastInsertRowid } = db.prepare(`
         INSERT INTO foods (user_id, name, category, unit, default_serving, cal, protein, carbs, fat, fiber, barcode)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(currentUserId(req), f.name, f.category, f.unit, f.default_serving, f.cal, f.protein, f.carbs, f.fat, f.fiber, f.barcode ?? null);
+      `).run(currentUserId(req), f.name, f.category, f.unit, f.default_serving, f.cal, f.protein, f.carbs, f.fat, f.fiber, f.barcode ? canonicalBarcode(f.barcode) : null);
 
       res.status(201).json({ success: true, data: publicFood(db.prepare("SELECT * FROM foods WHERE id = ?").get(lastInsertRowid) as FoodRow) });
     } catch (err) {
