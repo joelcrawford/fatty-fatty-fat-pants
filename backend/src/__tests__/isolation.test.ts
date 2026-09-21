@@ -10,9 +10,9 @@ import { makeTestContext, TestContext, seedOtherUser, OtherUser, food, exercise,
 
 let t: TestContext;
 let other: OtherUser;
-beforeEach(() => {
-  t = makeTestContext();
-  other = seedOtherUser(t.db);
+beforeEach(async () => {
+  t = await makeTestContext();
+  other = await seedOtherUser(t);
 });
 afterEach(() => { t.db.close(); });
 

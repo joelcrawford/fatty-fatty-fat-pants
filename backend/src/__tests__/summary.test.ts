@@ -1,7 +1,7 @@
 import { makeTestContext, TestContext, food, exercise, DAY } from "./helpers";
 
 let t: TestContext;
-beforeEach(() => { t = makeTestContext(); });
+beforeEach(async () => { t = await makeTestContext(); });
 afterEach(() => { t.db.close(); });
 
 describe("GET /api/summary/day/:date", () => {

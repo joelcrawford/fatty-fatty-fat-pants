@@ -26,8 +26,12 @@ nutrition-tracker/
 │   │   ├── types.ts          Shared TypeScript interfaces
 │   │   ├── __tests__/        Jest + supertest suites (in-memory SQLite)
 │   │   ├── db/
-│   │   │   ├── index.ts      SQLite connection; runs schema.sql on start
-│   │   │   └── schema.sql    Single source of truth for the schema + views
+│   │   │   ├── index.ts      SQLite connection + migration runner
+│   │   │   └── migrations/   Numbered .sql files, applied once each, in order
+│   │   ├── auth/             Password hashing, tokens, requireAuth, mailer, invites
+│   │   ├── config.ts         Environment → typed config (fails fast in production)
+│   │   ├── validation.ts     zod schemas + validate() middleware
+│   │   ├── scripts/          create-invite CLI
 │   │   └── routes/
 │   │       ├── food.ts       /api/food endpoints
 │   │       ├── exercise.ts   /api/exercise endpoints
@@ -150,6 +154,11 @@ curl http://localhost:3001/health
 | `PORT` | No | `3001` | Port the Express server listens on |
 | `FRONTEND_URL` | Yes (prod) | — | Frontend origin for CORS whitelist |
 | `NODE_ENV` | No | `development` | Affects logging verbosity |
+| `JWT_SECRET` | **Yes (prod)** | random per start | Access-token signing key, min 32 chars (`openssl rand -hex 32`). The server refuses to start in production without it |
+| `TRUST_PROXY` | Yes (prod) | `0` | Set to `1` behind Nginx so rate limiting sees real client IPs |
+| `RESEND_API_KEY` | Yes (prod) | — | Without it, emails are printed to the server log instead of sent |
+| `MAIL_FROM` | Yes (prod) | — | From address on a domain verified in Resend |
+| `PASSWORD_RESET_URL` | No | `FRONTEND_URL/reset-password?token={token}` | Link template for reset emails; use an app deep link for mobile |
 
 ### Frontend (.env.local / .env.production)
 
@@ -166,7 +175,7 @@ In production, Vite bakes `VITE_API_URL` into the built JS bundle at build time.
 ### Why SQLite and not PostgreSQL?
 SQLite is appropriate for a single-user application with no concurrent write requirements. It requires zero server infrastructure — the database is a single file (`nutrition.db`) that lives alongside the Node.js process. The schema is written to be PostgreSQL-compatible if migration becomes necessary (multi-user, higher traffic).
 
-To migrate to PostgreSQL later: replace `better-sqlite3` with `pg`, update connection syntax, and run `backend/src/db/schema.sql` against a Postgres instance.
+To migrate to PostgreSQL later: replace `better-sqlite3` with `pg`, update connection syntax, and run the files in `backend/src/db/migrations/` against a Postgres instance.
 
 ### Why a monolith frontend (one App.tsx)?
 At ~800 lines, the component is large but manageable for a solo-developer or small team. It was built this way for speed and simplicity. If the codebase grows, refactor into:
@@ -193,8 +202,20 @@ src/
 ### Why inline styles and not Tailwind or CSS modules?
 The prototype was built as a Claude artifact with no build tooling. Inline styles were carried forward for consistency. For production, converting to CSS modules or Tailwind is recommended — the design token system (the `C` object in App.tsx) maps directly to CSS custom properties.
 
-### Why no authentication?
-Single-user v1. The database schema includes `user_id` on all tables ready for multi-user support. Authentication can be added with a standard JWT middleware layer without changing the schema.
+### How authentication works
+This is a multi-user app. Accounts are created by invitation, passwords are hashed with scrypt (Node's standard library, so no native module to build), and sessions use a 15-minute access JWT plus a 60-day revocable refresh token that is rotated on every use and stored only as a hash. `requireAuth` sits in front of every `/api` route except `/api/auth/*`; routes read the user from `currentUserId(req)`, which throws if the middleware did not run. See `docs/API_SPEC.md` → Authentication for the client contract.
+
+**Inviting someone**
+```bash
+cd backend
+npm run invite -- --note "for Sam" --days 14      # prints e.g. K7QM-2XRD-9HTW
+# production:
+docker exec <api container> node dist/scripts/create-invite.js --note "for Sam"
+```
+The first account on a new server is created the same way.
+
+### Database migrations
+`backend/src/db/migrations/NNNN_name.sql`, applied in order on startup, each in its own transaction, each recorded in the `schema_migrations` table so it runs exactly once. **Never edit a migration that has shipped; add a new file.** A migration that fails, or that leaves a dangling foreign key, rolls back completely and stops the server from starting.
 
 ### Why is the food library hardcoded in the frontend?
 The 121-item library is static data that doesn't change frequently. It was bundled into the frontend for simplicity and instant search performance with no network round-trip. When the custom food entry feature is built (future), it will query the `custom_foods` table via the API, and the two sources can be merged in the UI.
@@ -409,7 +430,7 @@ SQLite databases in WAL mode are safe to copy while the server is running.
 
 ## 15. Known Limitations (v1)
 
-- No authentication — the app is open to anyone with the URL
+- The web app has no login screen yet, so it cannot talk to the API now that every route requires an account (tracked as its own issue)
 - Food library is static — editing requires a code change and redeploy
 - No barcode scanner — manual food search only
 - History date chips show dates with food logged; gaps are normal

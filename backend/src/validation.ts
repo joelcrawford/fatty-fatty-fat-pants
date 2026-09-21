@@ -108,6 +108,45 @@ export const weightQuery = z.object({
     .default(30),
 });
 
+// ── Auth ─────────────────────────────────────────────────────────────────────
+
+const email = z
+  .string({ required_error: "is required", invalid_type_error: "must be a string" })
+  .trim()
+  .toLowerCase()
+  .max(254, "cannot be longer than 254 characters")
+  .email("must be a valid email address");
+
+// Length is the only rule (NIST 800-63B): composition rules make passwords
+// worse. The cap stops someone making the server hash a megabyte.
+const newPassword = z
+  .string({ required_error: "is required", invalid_type_error: "must be a string" })
+  .min(10, "must be at least 10 characters")
+  .max(200, "cannot be longer than 200 characters");
+
+// For checking an existing password: never reveal the rules, just require one.
+const existingPassword = z
+  .string({ required_error: "is required", invalid_type_error: "must be a string" })
+  .min(1, "is required")
+  .max(200, "cannot be longer than 200 characters");
+
+const opaqueToken = z
+  .string({ required_error: "is required", invalid_type_error: "must be a string" })
+  .min(1, "is required")
+  .max(200, "is not valid");
+
+export const registerSchema = z.object({
+  email,
+  password: newPassword,
+  name: z.string({ invalid_type_error: "must be a string" }).trim().max(100, "cannot be longer than 100 characters").default(""),
+  invite_code: opaqueToken,
+});
+export const loginSchema = z.object({ email, password: existingPassword });
+export const refreshSchema = z.object({ refresh_token: opaqueToken });
+export const forgotPasswordSchema = z.object({ email });
+export const resetPasswordSchema = z.object({ token: opaqueToken, password: newPassword });
+export const deleteAccountSchema = z.object({ password: existingPassword });
+
 // ── Middleware ───────────────────────────────────────────────────────────────
 
 export interface ValidationDetail {

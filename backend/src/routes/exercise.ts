@@ -1,18 +1,18 @@
 import { Router, Request, Response } from "express";
 import { Db } from "../db";
 import { ExerciseEntry } from "../types";
+import { currentUserId } from "../auth/middleware";
 import { validate, dateParams, idParams, exerciseEntrySchema, ExerciseInput } from "../validation";
 
 export function createExerciseRouter(db: Db): Router {
   const router = Router();
-  const USER_ID = 1; // Replaced by the authenticated user in #3
 
   // GET /api/exercise/:date
   router.get("/:date", validate({ params: dateParams }), (req: Request, res: Response) => {
     try {
       const entries = db
         .prepare("SELECT * FROM exercise_logs WHERE user_id = ? AND date = ? ORDER BY created_at ASC, id ASC")
-        .all(USER_ID, req.params.date) as ExerciseEntry[];
+        .all(currentUserId(req), req.params.date) as ExerciseEntry[];
 
       res.json({ success: true, data: entries });
     } catch (err) {
@@ -28,7 +28,7 @@ export function createExerciseRouter(db: Db): Router {
       const result = db.prepare(`
         INSERT INTO exercise_logs (user_id, date, name, duration, cal)
         VALUES (?, ?, ?, ?, ?)
-      `).run(USER_ID, entry.date, entry.name, entry.duration, entry.cal);
+      `).run(currentUserId(req), entry.date, entry.name, entry.duration, entry.cal);
 
       const newEntry = db
         .prepare("SELECT * FROM exercise_logs WHERE id = ?")
@@ -44,7 +44,7 @@ export function createExerciseRouter(db: Db): Router {
   router.delete("/:id", validate({ params: idParams }), (req: Request, res: Response) => {
     try {
       const id = req.params.id as unknown as number;
-      const result = db.prepare("DELETE FROM exercise_logs WHERE id = ? AND user_id = ?").run(id, USER_ID);
+      const result = db.prepare("DELETE FROM exercise_logs WHERE id = ? AND user_id = ?").run(id, currentUserId(req));
 
       if (result.changes === 0) {
         return res.status(404).json({ success: false, error: "Entry not found" });

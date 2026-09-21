@@ -4,6 +4,10 @@ import helmet from "helmet";
 import morgan from "morgan";
 
 import { Db } from "./db";
+import { Config, loadConfig } from "./config";
+import { Mailer, createMailer } from "./auth/mailer";
+import { requireAuth } from "./auth/middleware";
+import { createAuthRouter } from "./routes/auth";
 import { createFoodRouter } from "./routes/food";
 import { createExerciseRouter } from "./routes/exercise";
 import { createSummaryRouter } from "./routes/summary";
@@ -15,21 +19,29 @@ import { createSummaryRouter } from "./routes/summary";
  * port) so tests can mount the app on an in-memory database without binding a
  * socket.
  */
-export function createApp(db: Db): express.Express {
+export interface AppDeps {
+  config?: Config;
+  mailer?: Mailer;
+}
+
+export function createApp(db: Db, deps: AppDeps = {}): express.Express {
+  const config = deps.config ?? loadConfig();
+  const mailer = deps.mailer ?? createMailer(config.mail);
+
   const app = express();
+
+  // Behind Nginx the socket address is the proxy; this makes req.ip (which the
+  // rate limiter keys on) the real client.
+  if (config.trustProxy > 0) app.set("trust proxy", config.trustProxy);
 
   // ── Middleware ─────────────────────────────────────────────────────────────
 
   app.use(helmet());
-  if (process.env.NODE_ENV !== "test") app.use(morgan("dev"));
+  if (config.env !== "test") app.use(morgan("dev"));
   app.use(express.json());
 
-  // CORS — update FRONTEND_URL in production to your actual domain
-  const allowedOrigins = [
-    "http://localhost:5173", // Vite dev server
-    "http://localhost:3000", // CRA dev server
-    process.env.FRONTEND_URL, // Production frontend URL
-  ].filter(Boolean) as string[];
+  // CORS governs browsers only. Native apps send no Origin header.
+  const allowedOrigins = config.corsOrigins;
 
   app.use(cors({
     origin: (origin, callback) => {
@@ -49,6 +61,12 @@ export function createApp(db: Db): express.Express {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
+  // Public: /health above and the auth routes (which guard their own
+  // account-management endpoints). Everything mounted after this line
+  // requires a valid access token.
+  app.use("/api/auth", createAuthRouter(db, config, mailer));
+  app.use("/api", requireAuth(db, config.jwtSecret));
+
   app.use("/api/food", createFoodRouter(db));
   app.use("/api/exercise", createExerciseRouter(db));
   app.use("/api/summary", createSummaryRouter(db));
@@ -65,7 +83,7 @@ export function createApp(db: Db): express.Express {
     const status = err.status && err.status >= 400 && err.status < 500 ? err.status : 500;
 
     if (status === 500) {
-      if (process.env.NODE_ENV !== "test") console.error(err.stack);
+      if (config.env !== "test") console.error(err.stack);
       return res.status(500).json({ success: false, error: "Internal server error" });
     }
 

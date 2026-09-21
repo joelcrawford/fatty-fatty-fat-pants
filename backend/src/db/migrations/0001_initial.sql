@@ -3,9 +3,12 @@
 -- Database: SQLite (production) / PostgreSQL-compatible (future migration)
 -- =============================================================================
 
--- This file is the single source of truth for the schema. It is executed by
--- src/db/index.ts on every server start, so every statement must be idempotent.
--- WAL mode and foreign_keys are set by the connection code, not here.
+-- Migration 0001: the schema as delivered in the original single-user bundle.
+--
+-- FROZEN. Never edit a migration that has shipped; add a new numbered file.
+-- Every statement here is idempotent on purpose: databases created before the
+-- migration ledger existed already contain these tables, and this file must
+-- run cleanly against them.
 
 -- -----------------------------------------------------------------------------
 -- USERS
