@@ -6,6 +6,7 @@ import type {
   CatalogFood, CatalogExercise, CatalogMealPlan, BarcodeResult,
 } from "./types";
 import type { NewFoodEntry, NewExerciseEntry, NewWeightEntry, NewCustomFood } from "./schemas";
+import type { PresetInfo, PresetKey, PresetProfileInput, PresetResult, ActivityLevel, Goal } from "./presets";
 
 /** Resolves to the `data` of the response envelope, or throws (Session throws ApiError). */
 export type RequestFn = <T>(path: string, init?: RequestInit) => Promise<T>;
@@ -59,6 +60,20 @@ export function createApiClient(request: RequestFn) {
       barcode: (barcode: string) => request<BarcodeResult>(`/api/foods/barcode/${encodeURIComponent(barcode)}`),
       exercises: () => request<CatalogExercise[]>("/api/exercises"),
       mealPlans: () => request<CatalogMealPlan[]>("/api/meal-plans"),
+    },
+
+    presets: {
+      list: () =>
+        request<{
+          presets: PresetInfo[];
+          disclaimer: string;
+          limits: { calorie_floor: { female: number; male: number }; calorie_ceiling: number };
+          activity_levels: ActivityLevel[];
+          goals: Goal[];
+        }>("/api/presets"),
+      /** Targets for a draft profile. Saves nothing. */
+      preview: (key: PresetKey, profile: PresetProfileInput) =>
+        request<PresetResult & { disclaimer: string }>(`/api/presets/${key}/preview`, post(profile)),
     },
   };
 }

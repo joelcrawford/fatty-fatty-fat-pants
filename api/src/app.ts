@@ -13,6 +13,7 @@ import { createExerciseRouter } from "./routes/exercise";
 import { createSummaryRouter } from "./routes/summary";
 import { createCatalogRouter } from "./routes/catalog";
 import { createBarcodeRouter } from "./routes/barcode";
+import { createPresetsRouter } from "./routes/presets";
 import { ProductLookup, createOffLookup } from "./barcode/openFoodFacts";
 
 /**
@@ -76,6 +77,7 @@ export function createApp(db: Db, deps: AppDeps = {}): express.Express {
   app.use("/api/food", createFoodRouter(db));
   app.use("/api/exercise", createExerciseRouter(db));
   app.use("/api/summary", createSummaryRouter(db));
+  app.use("/api", createPresetsRouter()); // /api/presets
   app.use("/api", createBarcodeRouter(db, config, lookupProduct)); // /api/foods/barcode/:barcode
   app.use("/api", createCatalogRouter(db)); // /api/foods, /api/exercises, /api/meal-plans
 
