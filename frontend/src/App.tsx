@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { api, FoodEntry, ExerciseEntry } from "./api";
+import { daysAgo, useToday } from "./date";
 
 // ── Targets (Galveston-modified for Katarina) ─────────────────────────────────
 const DAILY_CAL = 1200;
@@ -187,12 +188,11 @@ const MEAL_PLANS = [
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const today = () => new Date().toISOString().split("T")[0];
 const r = (n: number, d = 1) => Math.round(n * Math.pow(10, d)) / Math.pow(10, d);
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function NutriTracker() {
-  const date = today();
+  const date = useToday();
   const [tab, setTab] = useState("dashboard");
   const [foodLog, setFoodLog] = useState<FoodEntry[]>([]);
   const [exerciseLog, setExerciseLog] = useState<ExerciseEntry[]>([]);
@@ -238,8 +238,7 @@ export default function NutriTracker() {
     const load = async () => {
       try {
         const end = date;
-        const startDate = new Date(); startDate.setDate(startDate.getDate() - 30);
-        const start = startDate.toISOString().split("T")[0];
+        const start = daysAgo(30);
         const summaries = await api.summary.getRange(start, end);
         setHistoryDates([date, ...summaries.map(s => s.date).filter(d => d !== date)]);
       } catch {}
