@@ -17,8 +17,6 @@ It is not a generic app. Every number, every food, every exercise, and every des
 project-bundle/
 ├── backend/              Node.js + TypeScript + Express + SQLite API
 ├── frontend/             React 18 + TypeScript + Vite PWA
-├── database/
-│   └── schema.sql        Standalone database schema with views
 ├── docker/
 │   └── docker-compose.yml  Local development stack
 └── docs/
@@ -171,7 +169,7 @@ Net carbs = total carbs − fibre. Exercise calories are added back to the daily
 | `docs/IMPLEMENTATION_GUIDE.md` | Developer setup, architecture decisions, deployment instructions, known limitations |
 | `docs/DESIGN_STYLE_GUIDE.md` | Colour palette, typography, spacing, component specs, interaction patterns |
 | `docs/API_SPEC.md` | Every endpoint with request/response examples, field descriptions, error codes |
-| `database/schema.sql` | Full SQLite schema with indexes, views, and comments |
+| `backend/src/db/schema.sql` | Full SQLite schema with indexes, views, and comments. Executed by the backend on every start |
 | `backend/README.md` | Backend-specific quick start and deployment |
 | `frontend/README.md` | Frontend-specific quick start, PWA install, deployment |
 

@@ -24,7 +24,8 @@ nutrition-tracker/
 │   │   ├── index.ts          Express server entry point
 │   │   ├── types.ts          Shared TypeScript interfaces
 │   │   ├── db/
-│   │   │   └── index.ts      SQLite connection + auto-migration
+│   │   │   ├── index.ts      SQLite connection; runs schema.sql on start
+│   │   │   └── schema.sql    Single source of truth for the schema + views
 │   │   └── routes/
 │   │       ├── food.ts       /api/food endpoints
 │   │       ├── exercise.ts   /api/exercise endpoints
@@ -49,9 +50,6 @@ nutrition-tracker/
 │   ├── tsconfig.json
 │   ├── .env.example
 │   └── .gitignore
-│
-├── database/
-│   └── schema.sql            Standalone SQL schema with views
 │
 ├── docker/
 │   └── docker-compose.yml    Local dev stack
@@ -109,7 +107,7 @@ npm run dev
 ### Option B — With Docker
 
 ```bash
-cd docker
+cd docker          # compose must be run from this directory
 docker compose up
 # Frontend: http://localhost:5173
 # Backend:  http://localhost:3001
@@ -149,7 +147,7 @@ In production, Vite bakes `VITE_API_URL` into the built JS bundle at build time.
 ### Why SQLite and not PostgreSQL?
 SQLite is appropriate for a single-user application with no concurrent write requirements. It requires zero server infrastructure — the database is a single file (`nutrition.db`) that lives alongside the Node.js process. The schema is written to be PostgreSQL-compatible if migration becomes necessary (multi-user, higher traffic).
 
-To migrate to PostgreSQL later: replace `better-sqlite3` with `pg`, update connection syntax, and run the same `schema.sql` against a Postgres instance.
+To migrate to PostgreSQL later: replace `better-sqlite3` with `pg`, update connection syntax, and run `backend/src/db/schema.sql` against a Postgres instance.
 
 ### Why a monolith frontend (one App.tsx)?
 At ~800 lines, the component is large but manageable for a solo-developer or small team. It was built this way for speed and simplicity. If the codebase grows, refactor into:

@@ -3,9 +3,9 @@
 -- Database: SQLite (production) / PostgreSQL-compatible (future migration)
 -- =============================================================================
 
--- Enable WAL mode for better concurrent read performance (SQLite only)
--- PRAGMA journal_mode = WAL;
--- PRAGMA foreign_keys = ON;
+-- This file is the single source of truth for the schema. It is executed by
+-- src/db/index.ts on every server start, so every statement must be idempotent.
+-- WAL mode and foreign_keys are set by the connection code, not here.
 
 -- -----------------------------------------------------------------------------
 -- USERS
@@ -72,11 +72,12 @@ CREATE INDEX IF NOT EXISTS idx_exercise_logs_user_date ON exercise_logs(user_id,
 CREATE TABLE IF NOT EXISTS weight_logs (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id     INTEGER NOT NULL DEFAULT 1,
-    date        TEXT    NOT NULL UNIQUE,    -- One entry per day enforced
+    date        TEXT    NOT NULL,           -- Format: YYYY-MM-DD
     weight_lbs  REAL    NOT NULL,
     notes       TEXT,                       -- Optional: mood, symptoms, context
     created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE (user_id, date)                  -- One entry per user per day
 );
 
 CREATE INDEX IF NOT EXISTS idx_weight_logs_user_date ON weight_logs(user_id, date);

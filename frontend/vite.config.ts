@@ -7,9 +7,11 @@ export default defineConfig({
     port: 5173,
     proxy: {
       // Proxies /api calls to the backend during local development
-      // so you don't need to worry about CORS when running locally
+      // so you don't need to worry about CORS when running locally.
+      // Under docker compose the backend is another container, not
+      // localhost, so compose sets API_PROXY_TARGET=http://backend:3001.
       "/api": {
-        target: "http://localhost:3001",
+        target: process.env.API_PROXY_TARGET || "http://localhost:3001",
         changeOrigin: true,
       },
     },
