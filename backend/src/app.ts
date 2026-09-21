@@ -36,7 +36,7 @@ export function createApp(db: Db): express.Express {
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error(`CORS blocked: ${origin}`));
+        callback(Object.assign(new Error(`Origin not allowed: ${origin}`), { status: 403, expose: true }));
       }
     },
     methods: ["GET", "POST", "DELETE", "OPTIONS"],
@@ -58,10 +58,23 @@ export function createApp(db: Db): express.Express {
     res.status(404).json({ success: false, error: "Route not found" });
   });
 
-  // Global error handler
-  app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    if (process.env.NODE_ENV !== "test") console.error(err.stack);
-    res.status(500).json({ success: false, error: "Internal server error" });
+  // Global error handler. Errors raised by middleware before a route runs
+  // (malformed JSON, body too large, blocked origin) carry a 4xx status and
+  // are the client's fault; report them as such instead of a blanket 500.
+  app.use((err: Error & { status?: number; type?: string }, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    const status = err.status && err.status >= 400 && err.status < 500 ? err.status : 500;
+
+    if (status === 500) {
+      if (process.env.NODE_ENV !== "test") console.error(err.stack);
+      return res.status(500).json({ success: false, error: "Internal server error" });
+    }
+
+    const error =
+      err.type === "entity.parse.failed" ? "Request body is not valid JSON" :
+      err.type === "entity.too.large" ? "Request body is too large" :
+      status === 403 ? "Origin not allowed" :
+      "Bad request";
+    res.status(status).json({ success: false, error });
   });
 
   return app;

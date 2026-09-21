@@ -1,18 +1,26 @@
 import { Router, Request, Response } from "express";
 import { Db } from "../db";
 import { FoodEntry, ApiResponse } from "../types";
+import { validate, dateParams, idParams, foodEntrySchema, foodBatchSchema, FoodInput } from "../validation";
 
 export function createFoodRouter(db: Db): Router {
   const router = Router();
-  const USER_ID = 1; // Single user for now — easy to extend later
+  const USER_ID = 1; // Replaced by the authenticated user in #3
+
+  const insert = db.prepare(`
+    INSERT INTO food_logs (user_id, date, meal, food_name, amount, cal, protein, carbs, fat, fiber)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const insertEntry = (e: FoodInput) =>
+    insert.run(USER_ID, e.date, e.meal, e.food_name, e.amount, e.cal, e.protein, e.carbs, e.fat, e.fiber)
+      .lastInsertRowid as number;
 
   // GET /api/food/:date — fetch all food entries for a date
-  router.get("/:date", (req: Request, res: Response) => {
+  router.get("/:date", validate({ params: dateParams }), (req: Request, res: Response) => {
     try {
-      const { date } = req.params;
       const entries = db
-        .prepare("SELECT * FROM food_logs WHERE user_id = ? AND date = ? ORDER BY created_at ASC")
-        .all(USER_ID, date) as FoodEntry[];
+        .prepare("SELECT * FROM food_logs WHERE user_id = ? AND date = ? ORDER BY created_at ASC, id ASC")
+        .all(USER_ID, req.params.date) as FoodEntry[];
 
       const response: ApiResponse<FoodEntry[]> = { success: true, data: entries };
       res.json(response);
@@ -22,72 +30,26 @@ export function createFoodRouter(db: Db): Router {
   });
 
   // POST /api/food — add a single food entry
-  router.post("/", (req: Request, res: Response) => {
+  router.post("/", validate({ body: foodEntrySchema }), (req: Request, res: Response) => {
     try {
-      const entry: FoodEntry = req.body;
-
-      if (!entry.date || !entry.meal || !entry.food_name) {
-        return res.status(400).json({ success: false, error: "Missing required fields: date, meal, food_name" });
-      }
-
-      const stmt = db.prepare(`
-        INSERT INTO food_logs (user_id, date, meal, food_name, amount, cal, protein, carbs, fat, fiber)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      const result = stmt.run(
-        USER_ID,
-        entry.date,
-        entry.meal,
-        entry.food_name,
-        entry.amount || "",
-        entry.cal || 0,
-        entry.protein || 0,
-        entry.carbs || 0,
-        entry.fat || 0,
-        entry.fiber || 0
-      );
-
-      const newEntry = db
-        .prepare("SELECT * FROM food_logs WHERE id = ?")
-        .get(result.lastInsertRowid) as FoodEntry;
-
+      const id = insertEntry(req.body as FoodInput);
+      const newEntry = db.prepare("SELECT * FROM food_logs WHERE id = ?").get(id) as FoodEntry;
       res.status(201).json({ success: true, data: newEntry });
     } catch (err) {
       res.status(500).json({ success: false, error: "Failed to save food entry" });
     }
   });
 
-  // POST /api/food/batch — add multiple entries at once (for recipe logging)
-  router.post("/batch", (req: Request, res: Response) => {
+  // POST /api/food/batch — add multiple entries at once (for recipe logging).
+  // The whole array is validated first, then inserted in one transaction, so
+  // it is all-or-nothing on both counts.
+  router.post("/batch", validate({ body: foodBatchSchema }), (req: Request, res: Response) => {
     try {
-      const entries: FoodEntry[] = req.body;
+      const insertMany = db.transaction((items: FoodInput[]) => items.map(insertEntry));
+      const ids = insertMany(req.body as FoodInput[]);
 
-      if (!Array.isArray(entries) || entries.length === 0) {
-        return res.status(400).json({ success: false, error: "Expected an array of food entries" });
-      }
-
-      const stmt = db.prepare(`
-        INSERT INTO food_logs (user_id, date, meal, food_name, amount, cal, protein, carbs, fat, fiber)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      const insertMany = db.transaction((items: FoodEntry[]) => {
-        const ids: number[] = [];
-        for (const entry of items) {
-          const result = stmt.run(
-            USER_ID, entry.date, entry.meal, entry.food_name,
-            entry.amount || "", entry.cal || 0, entry.protein || 0,
-            entry.carbs || 0, entry.fat || 0, entry.fiber || 0
-          );
-          ids.push(result.lastInsertRowid as number);
-        }
-        return ids;
-      });
-
-      const ids = insertMany(entries);
       const inserted = db
-        .prepare(`SELECT * FROM food_logs WHERE id IN (${ids.map(() => "?").join(",")})`)
+        .prepare(`SELECT * FROM food_logs WHERE id IN (${ids.map(() => "?").join(",")}) ORDER BY id ASC`)
         .all(...ids) as FoodEntry[];
 
       res.status(201).json({ success: true, data: inserted });
@@ -97,18 +59,16 @@ export function createFoodRouter(db: Db): Router {
   });
 
   // DELETE /api/food/:id — remove a single entry
-  router.delete("/:id", (req: Request, res: Response) => {
+  router.delete("/:id", validate({ params: idParams }), (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
-      const result = db
-        .prepare("DELETE FROM food_logs WHERE id = ? AND user_id = ?")
-        .run(id, USER_ID);
+      const id = req.params.id as unknown as number;
+      const result = db.prepare("DELETE FROM food_logs WHERE id = ? AND user_id = ?").run(id, USER_ID);
 
       if (result.changes === 0) {
         return res.status(404).json({ success: false, error: "Entry not found" });
       }
 
-      res.json({ success: true, data: { deleted_id: Number(id) } });
+      res.json({ success: true, data: { deleted_id: id } });
     } catch (err) {
       res.status(500).json({ success: false, error: "Failed to delete entry" });
     }

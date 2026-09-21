@@ -18,7 +18,42 @@ Every endpoint returns the same wrapper:
 
 // Error
 { "success": false, "error": "Human-readable error message" }
+
+// Validation error (400) — same envelope, plus one entry per problem
+{
+  "success": false,
+  "error": "meal: must be one of: Breakfast, Lunch, Dinner, Snacks; cal: cannot be negative",
+  "details": [
+    { "path": "meal", "message": "must be one of: Breakfast, Lunch, Dinner, Snacks" },
+    { "path": "cal",  "message": "cannot be negative" }
+  ]
+}
 ```
+
+---
+
+## Validation
+
+Every request is validated before it reaches the database (`backend/src/validation.ts`). A request that fails is rejected with **400** and stores nothing. All problems are reported at once. `error` is a single sentence suitable for showing to a person; `details[].path` names the field so a form can highlight it (for batch requests the path includes the index, e.g. `1.meal`).
+
+| Rule | Applies to |
+|---|---|
+| `YYYY-MM-DD` **and** a real calendar date (`2026-02-30` is rejected) | every `date`, in paths, queries and bodies |
+| One of `Breakfast`, `Lunch`, `Dinner`, `Snacks` (case-sensitive) | `meal` |
+| Number, finite, `0`–`10000`; defaults to `0` | `cal` (food and exercise) |
+| Number, finite, `0`–`2000`; defaults to `0` | `protein`, `carbs`, `fat`, `fiber` |
+| String, trimmed, 1–200 characters | `food_name`, exercise `name` |
+| String, trimmed, up to 50 characters; defaults to `""` | `amount`, `duration` |
+| Number, greater than `0`, at most `1500` | `weight_lbs` |
+| String, trimmed, up to 500 characters; optional | weight `notes` |
+| Positive whole number | `:id` |
+| 1–50 entries | `POST /api/food/batch` |
+| `start` ≤ `end`, span of at most 366 days | `GET /api/summary/range` |
+| Whole number 1–365; defaults to `30` | `?days` on `GET /api/summary/weight` |
+
+Numbers must be JSON numbers; `"30"` is rejected. Strings are trimmed before storing. Unknown keys are **stripped, not rejected**; in particular a client-supplied `user_id`, `id` or `created_at` is ignored.
+
+The upper bounds are sanity limits that catch unit mistakes and garbage. They are not nutritional guidance.
 
 ---
 
@@ -122,16 +157,20 @@ Adds a single food entry to the log.
 }
 ```
 
-**Response 400** (missing required field):
+**Response 400** (validation, see [Validation](#validation)):
 ```json
-{ "success": false, "error": "Missing required fields: date, meal, food_name" }
+{
+  "success": false,
+  "error": "meal: must be one of: Breakfast, Lunch, Dinner, Snacks",
+  "details": [{ "path": "meal", "message": "must be one of: Breakfast, Lunch, Dinner, Snacks" }]
+}
 ```
 
 ---
 
 ### POST /api/food/batch
 
-Adds multiple food entries in a single atomic transaction. Used when logging a full recipe from the Meals tab. All entries are inserted or none are (transaction).
+Adds 1–50 food entries at once. Used when logging a full recipe from the Meals tab. It is all-or-nothing twice over: the whole array is validated before anything is written, and the inserts run in one transaction.
 
 **Request body:**
 ```json
@@ -172,9 +211,13 @@ Adds multiple food entries in a single atomic transaction. Used when logging a f
 }
 ```
 
-**Response 400** (empty or non-array body):
+**Response 400** (not an array, empty, more than 50, or any entry invalid). The path names the offending entry by index:
 ```json
-{ "success": false, "error": "Expected an array of food entries" }
+{
+  "success": false,
+  "error": "1.meal: must be one of: Breakfast, Lunch, Dinner, Snacks",
+  "details": [{ "path": "1.meal", "message": "must be one of: Breakfast, Lunch, Dinner, Snacks" }]
+}
 ```
 
 ---
@@ -348,18 +391,22 @@ Returns daily summaries for all days with food logged within a date range. Used 
 **Notes:**
 - Results are ordered by date descending (most recent first)
 - Days with no food logged are not included (no empty days)
-- Maximum range is not enforced server-side but the frontend requests 30 days
+- `start` must not be after `end`, and the span may not exceed 366 days
 
-**Response 400** (missing params):
+**Response 400** (missing, malformed, backwards, or too long):
 ```json
-{ "success": false, "error": "start and end query params required" }
+{
+  "success": false,
+  "error": "end: is required",
+  "details": [{ "path": "end", "message": "is required" }]
+}
 ```
 
 ---
 
 ### POST /api/summary/weight
 
-Logs a weight entry for a given date. One entry per date is enforced — duplicate date inserts are silently ignored (not an error).
+Logs a weight entry for a given date. There is one entry per user per date: weighing in again on the same date **replaces** that day's weight and notes. The status code says which happened, and the response is always the row as stored.
 
 **Request body:**
 ```json
@@ -373,15 +420,17 @@ Logs a weight entry for a given date. One entry per date is enforced — duplica
 **Required:** `date`, `weight_lbs`
 **Optional:** `notes`
 
-**Response 201:**
+**Response 201** (new entry) or **200** (existing entry for that date replaced):
 ```json
 {
   "success": true,
   "data": {
     "id": 8,
+    "user_id": 1,
     "date": "2026-04-26",
     "weight_lbs": 133.2,
-    "notes": "After Lagree, felt good"
+    "notes": "After Lagree, felt good",
+    "created_at": "2026-04-26T08:15:00"
   }
 }
 ```
@@ -432,8 +481,10 @@ These are enforced in the frontend only (not the API). Included here for referen
 |---|---|
 | 200 | Success (GET, DELETE) |
 | 201 | Created successfully (POST) |
-| 400 | Bad request — missing or invalid fields |
+| 400 | Bad request — validation failed (see `details`), or the body is not valid JSON |
+| 403 | Request came from a browser origin that is not on the CORS allow-list |
 | 404 | Resource not found |
+| 413 | Request body too large (limit 100 KB) |
 | 500 | Internal server error — check PM2 logs |
 
 All 4xx and 5xx responses include `{ "success": false, "error": "..." }`.

@@ -44,16 +44,15 @@ describe("POST /api/food", () => {
     delete body[field];
     const res = await t.api.post("/api/food").send(body);
     expect(res.status).toBe(400);
-    expect(res.body).toEqual({ success: false, error: "Missing required fields: date, meal, food_name" });
+    expect(res.body.success).toBe(false);
+    expect(res.body.details.map((d: any) => d.path)).toEqual([field]);
     expect(rowCount()).toBe(0);
   });
 
-  it("refuses a meal outside Breakfast/Lunch/Dinner/Snacks and stores nothing", async () => {
-    // Status code is deliberately not pinned: today the DB CHECK turns this
-    // into a 500; request validation (#4) will make it a 400.
+  it("refuses a meal outside Breakfast/Lunch/Dinner/Snacks with 400 and stores nothing", async () => {
     const res = await t.api.post("/api/food").send(food({ meal: "Brunch" }));
-    expect(res.status).toBeGreaterThanOrEqual(400);
-    expect(res.body.success).toBe(false);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("meal: must be one of: Breakfast, Lunch, Dinner, Snacks");
     expect(rowCount()).toBe(0);
   });
 });
@@ -71,10 +70,19 @@ describe("POST /api/food/batch", () => {
     expect(rowCount()).toBe(3);
   });
 
-  it.each([[[]], [{ not: "an array" }]])("rejects %j with 400", async (body) => {
+  it.each([
+    [[], "Expected at least one food entry"],
+    [{ not: "an array" }, "Expected an array of food entries"],
+  ])("rejects %j with 400", async (body, message) => {
     const res = await t.api.post("/api/food/batch").send(body as object);
     expect(res.status).toBe(400);
-    expect(res.body).toEqual({ success: false, error: "Expected an array of food entries" });
+    expect(res.body.error).toBe(message);
+  });
+
+  it("rejects more than 50 entries", async () => {
+    const res = await t.api.post("/api/food/batch").send(Array.from({ length: 51 }, () => food()));
+    expect(res.status).toBe(400);
+    expect(rowCount()).toBe(0);
   });
 
   it("is atomic: one bad entry means none are stored", async () => {
@@ -82,8 +90,9 @@ describe("POST /api/food/batch", () => {
       food({ food_name: "Good one" }),
       food({ food_name: "Bad one", meal: "Brunch" }),
     ]);
-    expect(res.status).toBeGreaterThanOrEqual(400);
-    expect(res.body.success).toBe(false);
+    expect(res.status).toBe(400);
+    // The path names the offending entry by index so a client can point at it.
+    expect(res.body.details).toEqual([{ path: "1.meal", message: "must be one of: Breakfast, Lunch, Dinner, Snacks" }]);
     expect(rowCount()).toBe(0);
   });
 });

@@ -71,10 +71,27 @@ describe("GET /api/summary/day/:date", () => {
 });
 
 describe("GET /api/summary/range", () => {
-  it.each(["", "?start=2026-04-01", "?end=2026-04-30"])("rejects '%s' with 400", async (qs) => {
+  it.each([
+    ["", ["start", "end"]],
+    ["?start=2026-04-01", ["end"]],
+    ["?end=2026-04-30", ["start"]],
+  ])("rejects '%s' with 400, naming what is missing", async (qs, missing) => {
     const res = await t.api.get(`/api/summary/range${qs}`);
     expect(res.status).toBe(400);
-    expect(res.body).toEqual({ success: false, error: "start and end query params required" });
+    expect(res.body.details.map((d: any) => d.path)).toEqual(missing);
+  });
+
+  it("rejects a range that runs backwards", async () => {
+    const res = await t.api.get("/api/summary/range?start=2026-04-30&end=2026-04-01");
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("start: must not be after end");
+  });
+
+  it("allows a full leap year but nothing longer", async () => {
+    const ok = await t.api.get("/api/summary/range?start=2024-01-01&end=2024-12-31");
+    expect(ok.status).toBe(200);
+    const tooLong = await t.api.get("/api/summary/range?start=2024-01-01&end=2025-01-01");
+    expect(tooLong.status).toBe(400);
   });
 
   it("returns one summary per day with food, newest first, inside the range only", async () => {
@@ -117,20 +134,38 @@ describe("weight log", () => {
     expect(body.data[0]).toMatchObject({ user_id: t.userId, date: DAY, weight_lbs: 133.2, notes: "After Lagree" });
   });
 
-  it.each([{ weight_lbs: 133 }, { date: DAY }])("rejects %j with 400", async (bodyIn) => {
+  it.each([
+    [{ weight_lbs: 133 }, "date"],
+    [{ date: DAY }, "weight_lbs"],
+  ])("rejects %j with 400", async (bodyIn, missing) => {
     const res = await t.api.post("/api/summary/weight").send(bodyIn);
     expect(res.status).toBe(400);
-    expect(res.body).toEqual({ success: false, error: "date and weight_lbs required" });
+    expect(res.body.details.map((d: any) => d.path)).toEqual([missing]);
   });
 
-  it("keeps one entry per day: a second weight for the same date does not add a row", async () => {
-    await t.api.post("/api/summary/weight").send({ date: DAY, weight_lbs: 133.2 });
-    await t.api.post("/api/summary/weight").send({ date: DAY, weight_lbs: 140 });
+  it("weighing in again on the same day replaces that day's entry, and says so", async () => {
+    const first = await t.api.post("/api/summary/weight").send({ date: DAY, weight_lbs: 133.2, notes: "morning" });
+    expect(first.status).toBe(201);
+
+    const second = await t.api.post("/api/summary/weight").send({ date: DAY, weight_lbs: 132.8 });
+    expect(second.status).toBe(200); // replaced, not created
+    expect(second.body.data).toMatchObject({ id: first.body.data.id, weight_lbs: 132.8, notes: null });
 
     const { body } = await t.api.get("/api/summary/weight");
     expect(body.data).toHaveLength(1);
-    // Which value wins is an open question on #4 (ignore vs upsert), so only
-    // the one-row-per-day invariant is pinned here.
+    expect(body.data[0].weight_lbs).toBe(132.8);
+  });
+
+  it("returns the row as stored, never an echo of the request", async () => {
+    const res = await t.api.post("/api/summary/weight").send({ date: DAY, weight_lbs: 133.2, notes: "  padded  ", junk: true });
+    expect(res.body.data).toMatchObject({ user_id: t.userId, notes: "padded" });
+    expect(res.body.data).not.toHaveProperty("junk");
+    expect(res.body.data.created_at).toEqual(expect.any(String));
+  });
+
+  it.each(["0", "366", "abc", "1.5"])("rejects ?days=%s with 400", async (days) => {
+    const res = await t.api.get(`/api/summary/weight?days=${days}`);
+    expect(res.status).toBe(400);
   });
 
   it("returns newest first and honours ?days as a row limit, defaulting to 30", async () => {
