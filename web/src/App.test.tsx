@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import App from "./App";
 import { api } from "./api";
 import { session } from "./session";
+import type { Profile } from "@nutrition/shared";
 
 // The real api.ts runs; only the network underneath it is faked. So these
 // tests cover the snake_case → camelCase mapping as well as the screens.
@@ -35,6 +36,15 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 const USER = { id: 7, email: "sam@example.com", name: "Sam", created_at: "" };
+
+// Sam's own plan: deliberately NOT the old hardcoded numbers, so a test that
+// passes only because 1200/80/25/80/30 are still baked in would fail.
+const PROFILE: Profile = {
+  units: "imperial", sex: "female", birth_year: 1990, height_cm: 168, weight_kg: 70, current_weight_kg: 70,
+  activity: "moderate", goal: "maintain", weekly_rate_kg: 0, preset_key: "balanced",
+  targets: { calories: 2100, protein_g: 105, carbs_g: 236, carbs_mode: "total", fat_g: 70, fiber_g: 29 },
+  targets_customised: false, onboarded_at: "", updated_at: "",
+};
 const openTab = (label: string) => fireEvent.click(screen.getByRole("button", { name: new RegExp(label) }));
 
 describe("api.catalog", () => {
@@ -52,15 +62,32 @@ describe("api.catalog", () => {
 });
 
 describe("the app, with its catalog coming from the API", () => {
+  it("shows the user's OWN targets, not the numbers the app was first built with", async () => {
+    render(<App user={USER} profile={PROFILE} />);
+    await screen.findByText(/2100 cal/);
+    expect(screen.getByText(/2100 cal · 105g protein · 236g carbs · 70g fat · 29g fibre/)).toBeTruthy();
+    expect(screen.getByText(/2100 cal/).textContent).toContain("Balanced");
+    expect(screen.queryByText(/1,?200 cal/)).toBeNull();
+  });
+
+  it("labels carbs the way the plan counts them", async () => {
+    const { unmount } = render(<App user={USER} profile={PROFILE} />);
+    expect(await screen.findByText("Carbs")).toBeTruthy();  // this plan counts total
+    unmount();
+
+    render(<App user={USER} profile={{ ...PROFILE, preset_key: "low_carb", targets: { ...PROFILE.targets, carbs_g: 50, carbs_mode: "net" } }} />);
+    expect(await screen.findByText("Net Carbs")).toBeTruthy();
+  });
+
   it("greets the signed-in user and loads the catalog once", async () => {
-    render(<App user={USER} />);
+    render(<App user={USER} profile={PROFILE} />);
     expect(screen.getByText("Sam's Nutrition")).toBeTruthy();
     await waitFor(() => expect(requests.filter((r) => r.path === "/api/foods")).toHaveLength(1));
     expect(requests.map((r) => r.path)).toEqual(expect.arrayContaining(["/api/exercises", "/api/meal-plans"]));
   });
 
   it("Library lists the loaded foods with net carbs worked out", async () => {
-    render(<App user={USER} />);
+    render(<App user={USER} profile={PROFILE} />);
     openTab("Library");
     await screen.findByText("Avocado");
     expect(screen.getByText("2.3g")).toBeTruthy(); // Avocado: 9 carbs − 6.7 fibre
@@ -68,7 +95,7 @@ describe("the app, with its catalog coming from the API", () => {
   });
 
   it("Food tab searches the loaded foods", async () => {
-    render(<App user={USER} />);
+    render(<App user={USER} profile={PROFILE} />);
     await waitFor(() => expect(requests.some((r) => r.path === "/api/foods")).toBe(true));
     openTab("Food");
     fireEvent.change(screen.getByPlaceholderText(/Search foods/), { target: { value: "salm" } }); // results appear once you type
@@ -77,7 +104,7 @@ describe("the app, with its catalog coming from the API", () => {
   });
 
   it("Exercise tab offers the loaded exercises and logs calories from duration", async () => {
-    render(<App user={USER} />);
+    render(<App user={USER} profile={PROFILE} />);
     openTab("Exercise");
     const select = await screen.findByRole("combobox");
     await within(select).findByText("Lagree (Megaformer)");
@@ -89,7 +116,7 @@ describe("the app, with its catalog coming from the API", () => {
   });
 
   it("Meals tab logs a recipe as one batch, scaled from each food's serving size", async () => {
-    render(<App user={USER} />);
+    render(<App user={USER} profile={PROFILE} />);
     openTab("Meals");
     await screen.findByText("Salmon Avocado Bowl");
     fireEvent.click(screen.getByRole("button", { name: /Log/ }));
@@ -102,7 +129,7 @@ describe("the app, with its catalog coming from the API", () => {
   });
 
   it("adding my own food saves it, shows it, and only custom foods can be deleted", async () => {
-    render(<App user={USER} />);
+    render(<App user={USER} profile={PROFILE} />);
     openTab("Library");
     await screen.findByText("Avocado");
     expect(screen.queryByRole("button", { name: "delete" })).toBeNull(); // built-ins have no delete
@@ -124,7 +151,7 @@ describe("the app, with its catalog coming from the API", () => {
 
   it("shows the connection banner if the catalog cannot be loaded", async () => {
     vi.spyOn(session, "request").mockRejectedValue(new Error("down"));
-    render(<App user={USER} />);
+    render(<App user={USER} profile={PROFILE} />);
     expect(await screen.findByText(/Cannot reach API/)).toBeTruthy();
   });
 });

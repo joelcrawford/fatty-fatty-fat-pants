@@ -7,6 +7,7 @@ import { session, ApiError, User } from "./session";
 
 // The real App talks to the API on mount; these tests are about the gate in front of it.
 vi.mock("./App", () => ({ default: ({ user }: { user: User }) => <div>APP for {user.email}</div> }));
+vi.mock("./Onboarding", () => ({ Onboarding: ({ name }: { name: string }) => <div>ONBOARDING for {name}</div> }));
 
 const SAM: User = { id: 7, email: "sam@example.com", name: "Sam", created_at: "" };
 const type = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
@@ -17,9 +18,16 @@ const become = (user: User | null) => act(() => {
   (session as any).listeners.forEach((l: (u: User | null) => void) => l(user));
 });
 
+/** By default the signed-in user has already onboarded. */
+const withProfile = (profile: unknown = { units: "imperial" }) =>
+  vi.spyOn(session, "request").mockImplementation(async (path: string) =>
+    (path === "/api/profile" ? { profile } : {}) as never
+  );
+
 beforeEach(() => {
   window.history.replaceState(null, "", "/");
   vi.spyOn(session, "restore").mockResolvedValue(null);
+  withProfile();
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
@@ -45,6 +53,35 @@ describe("the gate", () => {
 
     expect(await screen.findByRole("button", { name: "Log in" })).toBeTruthy();
     expect(screen.queryByText(/APP for/)).toBeNull();
+  });
+});
+
+describe("onboarding", () => {
+  it("a user with no profile is sent to onboarding, never into the app", async () => {
+    withProfile(null);
+    vi.spyOn(session, "restore").mockImplementation(async () => { await become(SAM); return SAM; });
+    render(<Root />);
+
+    expect(await screen.findByText("ONBOARDING for Sam")).toBeTruthy();
+    expect(screen.queryByText(/APP for/)).toBeNull();
+  });
+
+  it("if the profile cannot be fetched we show onboarding rather than an app with no targets", async () => {
+    vi.spyOn(session, "request").mockRejectedValue(new Error("offline"));
+    vi.spyOn(session, "restore").mockImplementation(async () => { await become(SAM); return SAM; });
+    render(<Root />);
+    expect(await screen.findByText("ONBOARDING for Sam")).toBeTruthy();
+  });
+
+  it("the profile is looked up again for a different user, never reused", async () => {
+    vi.spyOn(session, "restore").mockImplementation(async () => { await become(SAM); return SAM; });
+    render(<Root />);
+    await screen.findByText("APP for sam@example.com");
+
+    withProfile(null);
+    await become({ ...SAM, id: 99, email: "other@example.com", name: "Other" });
+
+    expect(await screen.findByText("ONBOARDING for Other")).toBeTruthy();
   });
 });
 
