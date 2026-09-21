@@ -24,6 +24,12 @@ export interface Config {
   /** Link put in reset emails; "{token}" is replaced. Web URL or app deep link. */
   passwordResetUrlTemplate: string;
   mail: { resendApiKey: string | null; from: string };
+  /** Per-USER limit on barcode lookups, which can each cause an upstream request. */
+  barcodeRateLimit: { windowMinutes: number; max: number } | null;
+  /** How long a barcode lookup is trusted. Misses expire fast: products get added. */
+  barcodeCache: { foundDays: number; notFoundDays: number };
+  /** Open Food Facts asks every client to identify itself. */
+  offUserAgent: string;
 }
 
 /**
@@ -63,5 +69,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       resendApiKey: env.RESEND_API_KEY || null,
       from: env.MAIL_FROM ?? "Nutrition Tracker <no-reply@localhost>",
     },
+    barcodeRateLimit: { windowMinutes: 10, max: 60 },
+    barcodeCache: { foundDays: 30, notFoundDays: 1 },
+    offUserAgent: env.OFF_USER_AGENT ?? "NutritionTracker/1.0 (https://github.com/joelcrawford/fatty-fatty-fat-pants)",
   };
 }

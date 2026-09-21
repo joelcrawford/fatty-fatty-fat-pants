@@ -30,6 +30,7 @@ nutrition-tracker/
 │   │   │   ├── migrations/   Numbered .sql files, applied once each, in order
 │   │   │   └── seed/         catalog.json (built-in foods, exercises, meal plans) + seeder
 │   │   ├── auth/             Password hashing, tokens, requireAuth, mailer, invites
+│   │   ├── barcode/          GTIN validation, Open Food Facts client and normalisation
 │   │   ├── config.ts         Environment → typed config (fails fast in production)
 │   │   ├── validation.ts     zod schemas + validate() middleware
 │   │   ├── scripts/          create-invite CLI
@@ -173,6 +174,7 @@ curl http://localhost:3001/health
 | `TRUST_PROXY` | Yes (prod) | `0` | Set to `1` behind Nginx so rate limiting sees real client IPs |
 | `RESEND_API_KEY` | Yes (prod) | — | Without it, emails are printed to the server log instead of sent |
 | `MAIL_FROM` | Yes (prod) | — | From address on a domain verified in Resend |
+| `OFF_USER_AGENT` | No | app name + repo URL | How the API identifies itself to Open Food Facts, as their terms ask. Use your app's name and a contact URL in production |
 | `PASSWORD_RESET_URL` | No | `FRONTEND_URL/reset-password?token={token}` | Link template for reset emails; use an app deep link for mobile |
 
 ### Frontend (.env.local / .env.production)
@@ -442,7 +444,7 @@ SQLite databases in WAL mode are safe to copy while the server is running.
 
 - The web app keeps its refresh token in `localStorage` so a reload stays logged in. That is readable by any script on the origin; the reasoning and mitigations are written up at the bottom of `frontend/src/session.ts`. The mobile app will use the device's secure storage instead
 - Built-in foods are edited in `catalog.json` and need a restart; users can add their own foods in the app. Custom foods cannot yet be edited, only deleted and re-added
-- No barcode scanner — manual food search only
+- Barcode lookup exists in the API (`GET /api/foods/barcode/:barcode`) but no client scans yet; that arrives with the mobile app
 - History date chips show dates with food logged; gaps are normal
 - Exercise calorie estimates are approximations based on MET values, not a heart rate monitor
 - PWA on iOS does not support push notifications (Apple limitation)

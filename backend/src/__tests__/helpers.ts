@@ -6,6 +6,7 @@ import { Mail, Mailer } from "../auth/mailer";
 import { hashPassword } from "../auth/passwords";
 import { signAccessToken } from "../auth/tokens";
 import { createInvite } from "../auth/invites";
+import { OffProduct } from "../barcode/openFoodFacts";
 
 /**
  * This is a multi-user app. Tests never talk to the API as "nobody" by
@@ -33,6 +34,9 @@ export interface TestContext {
   /** Every email the app tried to send, oldest first. */
   outbox: Mail[];
   invite(opts?: { note?: string; expiresInDays?: number }): string;
+  /** The fake product database: barcode → product, null (unknown), or an Error to throw. Every call is recorded in offCalls. */
+  off: Map<string, OffProduct | null | Error>;
+  offCalls: string[];
 }
 
 export const PASSWORD = "correct horse battery";
@@ -42,6 +46,7 @@ export const testConfig = (overrides: Partial<Config> = {}): Config => ({
   ...loadConfig({ NODE_ENV: "test", JWT_SECRET: "test-secret-test-secret-test-secret-1234" }),
   scrypt: { N: 2 ** 4, r: 8, p: 1 },
   authRateLimit: null,
+  barcodeRateLimit: null,
   passwordResetUrlTemplate: "app://reset?token={token}",
   ...overrides,
 });
@@ -67,7 +72,15 @@ export async function makeTestContext(overrides: Partial<Config> = {}): Promise<
   const config = testConfig(overrides);
   const outbox: Mail[] = [];
   const mailer: Mailer = { send: async (mail) => { outbox.push(mail); } };
-  const app = createApp(db, { config, mailer });
+  const off = new Map<string, OffProduct | null | Error>();
+  const offCalls: string[] = [];
+  const lookupProduct = async (barcode: string) => {
+    offCalls.push(barcode);
+    const answer = off.get(barcode) ?? null;
+    if (answer instanceof Error) throw answer;
+    return answer;
+  };
+  const app = createApp(db, { config, mailer, lookupProduct });
 
   const user = await createUser(db, config);
 
@@ -78,7 +91,7 @@ export async function makeTestContext(overrides: Partial<Config> = {}): Promise<
   };
 
   return {
-    db, config, outbox, as,
+    db, config, outbox, as, off, offCalls,
     api: as(user.id),
     anonymous: request.agent(app),
     userId: user.id,
