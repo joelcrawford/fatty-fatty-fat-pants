@@ -53,6 +53,29 @@ describe("reads never include another user's rows", () => {
   });
 });
 
+describe("custom foods are private to their owner", () => {
+  const theirGranola = { name: "Their secret granola", cal: 1, protein: 1, carbs: 1, fat: 1, fiber: 1 };
+
+  it("I cannot see, search for, or delete someone else's custom food; they can", async () => {
+    const theirs = t.as(other.userId);
+    const { body } = await theirs.post("/api/foods").send(theirGranola);
+
+    expect((await t.api.get("/api/foods")).body.data).toHaveLength(121);
+    expect((await t.api.get("/api/foods?q=secret")).body.data).toEqual([]);
+    expect((await t.api.get("/api/foods?scope=mine")).body.data).toEqual([]);
+
+    const res = await t.api.delete(`/api/foods/${body.data.id}`);
+    expect(res.status).toBe(404); // indistinguishable from an id that does not exist
+    expect((await theirs.get("/api/foods?scope=mine")).body.data).toHaveLength(1);
+  });
+
+  it("both of us can have a custom food with the same name", async () => {
+    await t.as(other.userId).post("/api/foods").send(theirGranola);
+    await t.api.post("/api/foods").send({ ...theirGranola, cal: 500 });
+    expect((await t.api.get("/api/foods?scope=mine")).body.data.map((f: any) => f.cal)).toEqual([500]);
+  });
+});
+
 describe("writes never touch another user's rows", () => {
   it("deleting their food entry by id is a 404 and leaves it in place", async () => {
     const res = await t.api.delete(`/api/food/${other.foodId}`);

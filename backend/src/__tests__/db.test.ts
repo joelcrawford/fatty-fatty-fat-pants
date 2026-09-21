@@ -24,11 +24,13 @@ describe("openDatabase", () => {
   it("creates every table and view, and records every migration in the ledger", () => {
     const db = openDatabase(":memory:");
     expect(tables(db)).toEqual(expect.arrayContaining([
-      "users", "food_logs", "exercise_logs", "weight_logs", "custom_foods",
+      "users", "food_logs", "exercise_logs", "weight_logs",
+      "foods", "exercises", "meal_plans", "meal_plan_items",
       "invite_codes", "refresh_tokens", "password_reset_tokens", "schema_migrations",
       "v_daily_food_summary", "v_daily_exercise_summary", "v_full_day_summary",
     ]));
     expect(ledger(db)).toEqual(loadMigrations().map((m) => m.version));
+    expect(tables(db)).not.toContain("custom_foods"); // folded into foods by 0003
     db.close();
   });
 
@@ -64,7 +66,6 @@ describe("multi-user guarantees in the schema", () => {
     ["food_logs", "(date, meal, food_name, amount) VALUES ('2026-04-26', 'Lunch', 'X', '')"],
     ["exercise_logs", "(date, name, duration) VALUES ('2026-04-26', 'X', '')"],
     ["weight_logs", "(date, weight_lbs) VALUES ('2026-04-26', 130)"],
-    ["custom_foods", "(name) VALUES ('X')"],
   ])("%s has no default owner: a row without user_id is refused", (table, rest) => {
     expect(() => db.prepare(`INSERT INTO ${table} ${rest}`).run()).toThrow(/NOT NULL constraint failed: .*user_id/);
   });
@@ -83,15 +84,18 @@ describe("multi-user guarantees in the schema", () => {
     db.prepare("INSERT INTO food_logs (user_id, date, meal, food_name, amount) VALUES (7, '2026-04-26', 'Lunch', 'X', '')").run();
     db.prepare("INSERT INTO exercise_logs (user_id, date, name, duration) VALUES (7, '2026-04-26', 'X', '')").run();
     db.prepare("INSERT INTO weight_logs (user_id, date, weight_lbs) VALUES (7, '2026-04-26', 130)").run();
-    db.prepare("INSERT INTO custom_foods (user_id, name) VALUES (7, 'X')").run();
+    db.prepare("INSERT INTO foods (user_id, name) VALUES (7, 'My custom food')").run();
     db.prepare("INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES (7, 'h', 0)").run();
     db.prepare("INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES (7, 'h', 0)").run();
 
     db.prepare("DELETE FROM users WHERE id = 7").run();
 
-    for (const t of ["food_logs", "exercise_logs", "weight_logs", "custom_foods", "refresh_tokens", "password_reset_tokens"]) {
+    for (const t of ["food_logs", "exercise_logs", "weight_logs", "refresh_tokens", "password_reset_tokens"]) {
       expect([t, (db.prepare(`SELECT COUNT(*) AS n FROM ${t}`).get() as any).n]).toEqual([t, 0]);
     }
+    // Their custom food goes; the built-in catalog is untouched.
+    expect((db.prepare("SELECT COUNT(*) AS n FROM foods WHERE user_id IS NOT NULL").get() as any).n).toBe(0);
+    expect((db.prepare("SELECT COUNT(*) AS n FROM foods WHERE user_id IS NULL").get() as any).n).toBeGreaterThan(100);
   });
 });
 
@@ -128,6 +132,16 @@ describe("upgrading a database from the single-user app", () => {
     const db = legacyDatabase();
     migrate(db);
     expect((db.prepare("SELECT COUNT(*) AS n FROM users").get() as any).n).toBe(0);
+    db.close();
+  });
+
+  it("carries over anything that was in the old custom_foods table", () => {
+    const db = legacyDatabase();
+    db.prepare("INSERT INTO custom_foods (name, cal_per_serving, protein, serving_size, serving_unit, barcode) VALUES ('Homemade granola', 210, 6, 50, 'g', '0123456789012')").run();
+    migrate(db);
+    expect(db.prepare("SELECT user_id, seed_key, name, cal, protein, default_serving, unit, category, barcode FROM foods WHERE user_id IS NOT NULL").all()).toEqual([
+      { user_id: 1, seed_key: null, name: "Homemade granola", cal: 210, protein: 6, default_serving: 50, unit: "g", category: "Other", barcode: "0123456789012" },
+    ]);
     db.close();
   });
 

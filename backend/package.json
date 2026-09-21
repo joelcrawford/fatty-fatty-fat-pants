@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc -p tsconfig.build.json && rm -rf dist/db/migrations && cp -R src/db/migrations dist/db/migrations",
+    "build": "tsc -p tsconfig.build.json && rm -rf dist/db/migrations && cp -R src/db/migrations dist/db/migrations && cp src/db/seed/catalog.json dist/db/seed/catalog.json",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "test": "NODE_ENV=test jest --coverage",

@@ -48,9 +48,60 @@ export interface DaySummary {
   net_cal: number;
 }
 
+// ── Catalog ──────────────────────────────────────────────────────────────────
+
+export interface Food {
+  id: number; name: string; cal: number; protein: number; carbs: number; fat: number; fiber: number;
+  unit: string; defaultServing: number; category: string;
+  /** True for a food this user added; only those can be deleted. */
+  custom: boolean;
+}
+export interface Exercise { name: string; calPerMin: number }
+export interface MealPlan {
+  id: number; name: string; mealType: "Breakfast" | "Lunch" | "Dinner" | "Snacks"; badge: string; description: string;
+  items: { foodId: number; servingAmount: number }[];
+}
+
+interface ApiFood {
+  id: number; name: string; category: string; unit: string; default_serving: number;
+  cal: number; protein: number; carbs: number; fat: number; fiber: number; custom: boolean;
+}
+const toFood = (f: ApiFood): Food => ({
+  id: f.id, name: f.name, category: f.category, unit: f.unit, defaultServing: f.default_serving,
+  cal: f.cal, protein: f.protein, carbs: f.carbs, fat: f.fat, fiber: f.fiber, custom: f.custom,
+});
+
+const catalog = {
+  /** Everything the app needs to offer foods, exercises and recipes, in one go. */
+  load: async (): Promise<{ foods: Food[]; exercises: Exercise[]; mealPlans: MealPlan[] }> => {
+    const [foods, exercises, plans] = await Promise.all([
+      request<ApiFood[]>("/api/foods"),
+      request<{ name: string; cal_per_min: number }[]>("/api/exercises"),
+      request<{ id: number; name: string; meal_type: MealPlan["mealType"]; badge: string; description: string; items: { serving_amount: number; food: ApiFood }[] }[]>("/api/meal-plans"),
+    ]);
+    return {
+      foods: foods.map(toFood),
+      exercises: exercises.map(e => ({ name: e.name, calPerMin: e.cal_per_min })),
+      mealPlans: plans.map(p => ({
+        id: p.id, name: p.name, mealType: p.meal_type, badge: p.badge, description: p.description,
+        items: p.items.map(i => ({ foodId: i.food.id, servingAmount: i.serving_amount })),
+      })),
+    };
+  },
+
+  addFood: async (f: Omit<Food, "id" | "custom">): Promise<Food> =>
+    toFood(await request<ApiFood>("/api/foods", {
+      method: "POST",
+      body: JSON.stringify({ name: f.name, category: f.category, unit: f.unit, default_serving: f.defaultServing, cal: f.cal, protein: f.protein, carbs: f.carbs, fat: f.fat, fiber: f.fiber }),
+    })),
+
+  deleteFood: (id: number) => request<{ deleted_id: number }>(`/api/foods/${id}`, { method: "DELETE" }),
+};
+
 // ── Food ─────────────────────────────────────────────────────────────────────
 
 export const api = {
+  catalog,
   food: {
     getByDate: (date: string) =>
       request<FoodEntry[]>(`/api/food/${date}`),
