@@ -32,7 +32,7 @@ describe("exercise log", () => {
     delete body[field];
     const res = await t.api.post("/api/exercise").send(body);
     expect(res.status).toBe(400);
-    expect(res.body).toEqual({ success: false, error: "Missing required fields: date, name" });
+    expect(res.body.details.map((d: any) => d.path)).toEqual([field]);
   });
 
   it("deletes an entry, and 404s on an unknown id", async () => {

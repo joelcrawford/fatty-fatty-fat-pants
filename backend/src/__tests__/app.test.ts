@@ -18,10 +18,16 @@ describe("app", () => {
     expect(res.body).toEqual({ success: false, error: "Route not found" });
   });
 
-  it("malformed JSON does not crash the server and returns an error envelope", async () => {
+  it("malformed JSON is the client's fault: 400, not 500", async () => {
     const res = await t.api.post("/api/food").set("Content-Type", "application/json").send("{not json");
-    expect(res.status).toBeGreaterThanOrEqual(400);
-    expect(res.body.success).toBe(false);
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ success: false, error: "Request body is not valid JSON" });
+  });
+
+  it("an oversized body is a 413", async () => {
+    const res = await t.api.post("/api/food").send({ food_name: "x".repeat(200_000) });
+    expect(res.status).toBe(413);
+    expect(res.body).toEqual({ success: false, error: "Request body is too large" });
   });
 
   describe("CORS", () => {
@@ -33,6 +39,8 @@ describe("app", () => {
     it("does not grant access to an unknown origin", async () => {
       const res = await t.api.get("/health").set("Origin", "https://evil.example");
       expect(res.headers["access-control-allow-origin"]).toBeUndefined();
+      expect(res.status).toBe(403);
+      expect(res.body).toEqual({ success: false, error: "Origin not allowed" });
     });
 
     it("allows requests with no Origin header (native apps, curl)", async () => {

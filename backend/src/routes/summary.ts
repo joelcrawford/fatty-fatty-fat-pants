@@ -1,13 +1,14 @@
 import { Router, Request, Response } from "express";
 import { Db } from "../db";
 import { DaySummary, WeightEntry } from "../types";
+import { validate, dateParams, rangeQuery, weightQuery, weightEntrySchema, WeightInput } from "../validation";
 
 export function createSummaryRouter(db: Db): Router {
   const router = Router();
-  const USER_ID = 1;
+  const USER_ID = 1; // Replaced by the authenticated user in #3
 
   // GET /api/summary/:date — full day nutrition summary
-  router.get("/day/:date", (req: Request, res: Response) => {
+  router.get("/day/:date", validate({ params: dateParams }), (req: Request, res: Response) => {
     try {
       const { date } = req.params;
 
@@ -48,13 +49,9 @@ export function createSummaryRouter(db: Db): Router {
   });
 
   // GET /api/summary/range?start=YYYY-MM-DD&end=YYYY-MM-DD — history range
-  router.get("/range", (req: Request, res: Response) => {
+  router.get("/range", validate({ query: rangeQuery }), (req: Request, res: Response) => {
     try {
       const { start, end } = req.query as { start: string; end: string };
-
-      if (!start || !end) {
-        return res.status(400).json({ success: false, error: "start and end query params required" });
-      }
 
       const rows = db.prepare(`
         SELECT
@@ -98,31 +95,38 @@ export function createSummaryRouter(db: Db): Router {
     }
   });
 
-  // POST /api/summary/weight — log weight
-  router.post("/weight", (req: Request, res: Response) => {
+  // POST /api/summary/weight — log weight. One entry per user per day:
+  // weighing in again on the same date replaces that day's entry.
+  // 201 when a new entry was created, 200 when an existing one was replaced.
+  // Either way the response is the row as stored.
+  router.post("/weight", validate({ body: weightEntrySchema }), (req: Request, res: Response) => {
     try {
-      const entry: WeightEntry = req.body;
+      const entry = req.body as WeightInput;
 
-      if (!entry.date || !entry.weight_lbs) {
-        return res.status(400).json({ success: false, error: "date and weight_lbs required" });
-      }
+      const existed = db
+        .prepare("SELECT 1 FROM weight_logs WHERE user_id = ? AND date = ?")
+        .get(USER_ID, entry.date) !== undefined;
 
-      const result = db.prepare(`
+      db.prepare(`
         INSERT INTO weight_logs (user_id, date, weight_lbs, notes)
         VALUES (?, ?, ?, ?)
-        ON CONFLICT DO NOTHING
-      `).run(USER_ID, entry.date, entry.weight_lbs, entry.notes || null);
+        ON CONFLICT (user_id, date) DO UPDATE SET weight_lbs = excluded.weight_lbs, notes = excluded.notes
+      `).run(USER_ID, entry.date, entry.weight_lbs, entry.notes ?? null);
 
-      res.status(201).json({ success: true, data: { id: result.lastInsertRowid, ...entry } });
+      const stored = db
+        .prepare("SELECT * FROM weight_logs WHERE user_id = ? AND date = ?")
+        .get(USER_ID, entry.date) as WeightEntry;
+
+      res.status(existed ? 200 : 201).json({ success: true, data: stored });
     } catch (err) {
       res.status(500).json({ success: false, error: "Failed to save weight" });
     }
   });
 
   // GET /api/summary/weight?days=30
-  router.get("/weight", (req: Request, res: Response) => {
+  router.get("/weight", validate({ query: weightQuery }), (req: Request, res: Response) => {
     try {
-      const days = parseInt(req.query.days as string) || 30;
+      const { days } = req.query as unknown as { days: number };
       const entries = db.prepare(`
         SELECT * FROM weight_logs
         WHERE user_id = ?

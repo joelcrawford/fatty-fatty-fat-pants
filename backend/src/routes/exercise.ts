@@ -1,18 +1,18 @@
 import { Router, Request, Response } from "express";
 import { Db } from "../db";
-import { ExerciseEntry, ApiResponse } from "../types";
+import { ExerciseEntry } from "../types";
+import { validate, dateParams, idParams, exerciseEntrySchema, ExerciseInput } from "../validation";
 
 export function createExerciseRouter(db: Db): Router {
   const router = Router();
-  const USER_ID = 1;
+  const USER_ID = 1; // Replaced by the authenticated user in #3
 
   // GET /api/exercise/:date
-  router.get("/:date", (req: Request, res: Response) => {
+  router.get("/:date", validate({ params: dateParams }), (req: Request, res: Response) => {
     try {
-      const { date } = req.params;
       const entries = db
-        .prepare("SELECT * FROM exercise_logs WHERE user_id = ? AND date = ? ORDER BY created_at ASC")
-        .all(USER_ID, date) as ExerciseEntry[];
+        .prepare("SELECT * FROM exercise_logs WHERE user_id = ? AND date = ? ORDER BY created_at ASC, id ASC")
+        .all(USER_ID, req.params.date) as ExerciseEntry[];
 
       res.json({ success: true, data: entries });
     } catch (err) {
@@ -21,18 +21,14 @@ export function createExerciseRouter(db: Db): Router {
   });
 
   // POST /api/exercise
-  router.post("/", (req: Request, res: Response) => {
+  router.post("/", validate({ body: exerciseEntrySchema }), (req: Request, res: Response) => {
     try {
-      const entry: ExerciseEntry = req.body;
-
-      if (!entry.date || !entry.name) {
-        return res.status(400).json({ success: false, error: "Missing required fields: date, name" });
-      }
+      const entry = req.body as ExerciseInput;
 
       const result = db.prepare(`
         INSERT INTO exercise_logs (user_id, date, name, duration, cal)
         VALUES (?, ?, ?, ?, ?)
-      `).run(USER_ID, entry.date, entry.name, entry.duration || "", entry.cal || 0);
+      `).run(USER_ID, entry.date, entry.name, entry.duration, entry.cal);
 
       const newEntry = db
         .prepare("SELECT * FROM exercise_logs WHERE id = ?")
@@ -45,18 +41,16 @@ export function createExerciseRouter(db: Db): Router {
   });
 
   // DELETE /api/exercise/:id
-  router.delete("/:id", (req: Request, res: Response) => {
+  router.delete("/:id", validate({ params: idParams }), (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
-      const result = db
-        .prepare("DELETE FROM exercise_logs WHERE id = ? AND user_id = ?")
-        .run(id, USER_ID);
+      const id = req.params.id as unknown as number;
+      const result = db.prepare("DELETE FROM exercise_logs WHERE id = ? AND user_id = ?").run(id, USER_ID);
 
       if (result.changes === 0) {
         return res.status(404).json({ success: false, error: "Entry not found" });
       }
 
-      res.json({ success: true, data: { deleted_id: Number(id) } });
+      res.json({ success: true, data: { deleted_id: id } });
     } catch (err) {
       res.status(500).json({ success: false, error: "Failed to delete entry" });
     }
