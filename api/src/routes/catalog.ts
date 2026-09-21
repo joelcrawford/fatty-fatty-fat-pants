@@ -3,6 +3,7 @@ import { Db } from "../db";
 import { loadCatalogSeed } from "../db/seed";
 import { currentUserId } from "../auth/middleware";
 import { canonicalBarcode, caloriesPerMinute } from "@nutrition/shared";
+import { currentWeightKg } from "./profile";
 import { validate, idParams, customFoodSchema, foodSearchQuery, CustomFoodInput } from "../validation";
 
 interface FoodRow {
@@ -31,8 +32,8 @@ export function createCatalogRouter(db: Db): Router {
   const router = Router();
   const VISIBLE = "(user_id IS NULL OR user_id = @userId)";
 
-  // Until profiles exist (#15) calories per minute are reported for the body
-  // weight the original figures were calibrated for. `met` is the real datum.
+  // Calories depend on who is exercising. Used only for someone who has not
+  // onboarded yet, so has no weight on record.
   const referenceKg = loadCatalogSeed().reference_weight_kg;
 
   // GET /api/foods?q=&category=&scope=all|mine|builtin
@@ -92,12 +93,14 @@ export function createCatalogRouter(db: Db): Router {
   });
 
   // GET /api/exercises
-  router.get("/exercises", (_req: Request, res: Response) => {
+  router.get("/exercises", (req: Request, res: Response) => {
     try {
+      // Latest weigh-in, else onboarding weight, else the reference weight.
+      const kg = currentWeightKg(db, currentUserId(req)) ?? referenceKg;
       const rows = db.prepare("SELECT id, name, met FROM exercises ORDER BY sort_order, id").all() as { id: number; name: string; met: number }[];
       res.json({
         success: true,
-        data: rows.map((e) => ({ ...e, cal_per_min: caloriesPerMinute(e.met, referenceKg), cal_per_min_weight_kg: referenceKg })),
+        data: rows.map((e) => ({ ...e, cal_per_min: caloriesPerMinute(e.met, kg), cal_per_min_weight_kg: kg })),
       });
     } catch (err) {
       res.status(500).json({ success: false, error: "Failed to fetch exercises" });

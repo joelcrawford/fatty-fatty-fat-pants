@@ -14,6 +14,7 @@ import { createSummaryRouter } from "./routes/summary";
 import { createCatalogRouter } from "./routes/catalog";
 import { createBarcodeRouter } from "./routes/barcode";
 import { createPresetsRouter } from "./routes/presets";
+import { createProfileRouter } from "./routes/profile";
 import { ProductLookup, createOffLookup } from "./barcode/openFoodFacts";
 
 /**
@@ -58,7 +59,7 @@ export function createApp(db: Db, deps: AppDeps = {}): express.Express {
         callback(Object.assign(new Error(`Origin not allowed: ${origin}`), { status: 403, expose: true }));
       }
     },
-    methods: ["GET", "POST", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }));
 
@@ -78,6 +79,7 @@ export function createApp(db: Db, deps: AppDeps = {}): express.Express {
   app.use("/api/exercise", createExerciseRouter(db));
   app.use("/api/summary", createSummaryRouter(db));
   app.use("/api", createPresetsRouter()); // /api/presets
+  app.use("/api", createProfileRouter(db)); // /api/profile
   app.use("/api", createBarcodeRouter(db, config, lookupProduct)); // /api/foods/barcode/:barcode
   app.use("/api", createCatalogRouter(db)); // /api/foods, /api/exercises, /api/meal-plans
 

@@ -18,6 +18,8 @@ export interface User {
   email: string;
   name: string;
   created_at: string;
+  /** Only on GET /api/auth/me. False until the user has saved a profile: send them to onboarding. */
+  onboarded?: boolean;
 }
 
 export interface TokenPair {

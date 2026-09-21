@@ -206,7 +206,7 @@ Looks in three places, in order: **the caller's own custom foods** (if you saved
 ```json
 { "id": 10, "name": "Lagree (Megaformer)", "met": 6.109, "cal_per_min": 6.5, "cal_per_min_weight_kg": 60.8 }
 ```
-`met` is the real datum: `cal/min = met × 3.5 × body weight (kg) / 200`. Until user profiles exist (#15), `cal_per_min` is computed for the reference weight stated in `cal_per_min_weight_kg`, which reproduces the original app's numbers.
+`met` is the real datum: `cal/min = met × 3.5 × body weight (kg) / 200`. `cal_per_min` is computed for **this user's** weight, stated in `cal_per_min_weight_kg`: their latest weigh-in, else the weight from their profile, else a reference weight for someone who has not onboarded yet.
 
 ### GET /api/meal-plans
 Each plan with its items, and each item with its full food, so a client can display and log a recipe without a second request. Log it with `POST /api/food/batch`.
@@ -214,6 +214,49 @@ Each plan with its items, and each item with its full food, so a client can disp
 { "id": 5, "name": "Salmon Avocado Bowl", "meal_type": "Lunch", "badge": "Galveston", "description": "…",
   "items": [ { "serving_amount": 120, "food": { "id": 2, "name": "Salmon (cooked)", "default_serving": 100, "cal": 208, "…": "…" } } ] }
 ```
+
+---
+
+## Profile
+
+One profile per user, created when they finish onboarding. It holds who they are, the plan they chose, and their daily targets.
+
+### GET /api/profile
+```json
+{ "profile": null }
+```
+`profile` is **null** until the user has onboarded. That is a normal state for every new account, not an error, so this is a 200. `GET /api/auth/me` also reports `onboarded: true|false`, so a client can decide where to send someone without a second request.
+
+Once onboarded:
+```json
+{ "profile": {
+  "units": "imperial", "sex": "female", "birth_year": 1976, "height_cm": 160.02,
+  "weight_kg": 60.78, "current_weight_kg": 60.78,
+  "activity": "sedentary", "goal": "lose", "weekly_rate_kg": 0.4536,
+  "preset_key": "galveston_style",
+  "targets": { "calories": 1200, "protein_g": 80, "carbs_g": 25, "carbs_mode": "net", "fat_g": 80, "fiber_g": 30 },
+  "targets_customised": false,
+  "onboarded_at": "2026-09-21 18:04:11", "updated_at": "2026-09-21 18:04:11"
+} }
+```
+`weight_kg` is what they entered; `current_weight_kg` is their **latest weigh-in** if they have logged one, and is what exercise calories use. `units` is a display preference only: storage is always metric.
+
+### PUT /api/profile
+Completes onboarding the first time (**201**), updates it afterwards (**200**). Send the whole profile; it is small, and that keeps the rules in one schema.
+
+| Field | Required | Notes |
+|---|---|---|
+| `weight_kg` | **always** | Exercise calories need it whatever the plan |
+| `preset_key` | **always** | One of the five |
+| `birth_year` | for computed presets | A year, not an age, so it never goes stale. Under 18 is refused |
+| `height_cm` | for computed presets | |
+| `targets` | for `custom` | Also allowed with a computed preset: see below |
+| `sex` | no | `female`, `male`, or omitted |
+| `units` | no | `imperial` (default) or `metric` |
+| `activity`, `goal`, `weekly_rate_kg` | no | Defaults: `sedentary`, `maintain`, 0.45 kg |
+| `local_date` | no | The user's local date. On **first** onboarding it records the entered weight as that day's weight-log entry, so the progress chart has a starting point. Never overwrites an entry already there. The server cannot know the user's calendar day on its own |
+
+**Where the targets come from.** For a computed preset the server calculates them; a client cannot pass off arbitrary numbers as a preset's. If `targets` is also sent and differs from what the preset gives, that is taken as the user having edited them: they are stored as sent and `targets_customised` becomes true. Editing them back to the preset's numbers clears the flag. This matters because a later release may change a preset's formula, and nobody's edited targets should move underneath them.
 
 ---
 

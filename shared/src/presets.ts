@@ -328,6 +328,80 @@ export function computeTargets(preset: PresetKey, profileInput: PresetProfileInp
   };
 }
 
+// ── A user's saved profile ───────────────────────────────────────────────────
+
+const thisYear = () => new Date().getFullYear();
+
+/**
+ * What PUT /api/profile accepts.
+ *
+ * Only `weight_kg` and `preset_key` are always required (weight is needed for
+ * exercise calories whatever the plan). A preset that COMPUTES targets also
+ * needs `birth_year` and `height_cm`. The Custom preset needs `targets`.
+ *
+ * Sending `targets` with a computed preset means "I edited the numbers": they
+ * are stored as given and flagged as customised.
+ */
+export const profileSchema = z
+  .object({
+    units: z.enum(["imperial", "metric"], { errorMap: () => ({ message: "must be imperial or metric" }) }).default("imperial"),
+    sex: presetProfileSchema.shape.sex,
+    birth_year: z
+      .number({ invalid_type_error: "must be a number" })
+      .int("must be a whole number")
+      .min(1900, "must be 1900 or later")
+      .refine((y) => thisYear() - y >= 18, "this app is for adults: you must be at least 18")
+      .optional(),
+    height_cm: presetProfileSchema.shape.height_cm.optional(),
+    weight_kg: presetProfileSchema.shape.weight_kg,
+    activity: presetProfileSchema.shape.activity,
+    goal: presetProfileSchema.shape.goal,
+    weekly_rate_kg: presetProfileSchema.shape.weekly_rate_kg,
+    preset_key: z.enum(PRESET_KEYS, {
+      errorMap: (issue, ctx) => ({ message: ctx.data === undefined ? "is required" : `must be one of: ${PRESET_KEYS.join(", ")}` }),
+    }),
+    targets: targetsSchema.optional(),
+    /**
+     * The user's local calendar date (YYYY-MM-DD). On FIRST onboarding, when
+     * given, the entered weight becomes that day's first weight-log entry so
+     * the progress chart has a starting point. The server cannot know the
+     * user's date on its own (see date.ts).
+     */
+    local_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "must be a date in YYYY-MM-DD format").optional(),
+  })
+  .superRefine((p, ctx) => {
+    if (p.preset_key === "custom") {
+      if (!p.targets) ctx.addIssue({ code: "custom", path: ["targets"], message: "is required for the Custom preset" });
+    } else {
+      if (p.birth_year === undefined) ctx.addIssue({ code: "custom", path: ["birth_year"], message: "is required to calculate targets" });
+      if (p.height_cm === undefined) ctx.addIssue({ code: "custom", path: ["height_cm"], message: "is required to calculate targets" });
+    }
+  });
+export type ProfileInput = z.input<typeof profileSchema>;
+
+export interface Profile {
+  units: "imperial" | "metric";
+  sex: "female" | "male" | null;
+  birth_year: number | null;
+  height_cm: number | null;
+  /** As entered at onboarding or last edited. For the latest weigh-in see current_weight_kg. */
+  weight_kg: number;
+  /** The most recent weight-log entry if there is one, else weight_kg. What exercise calories use. */
+  current_weight_kg: number;
+  activity: ActivityLevel;
+  goal: Goal;
+  weekly_rate_kg: number;
+  preset_key: PresetKey;
+  targets: Targets;
+  /** True when the user edited what the preset computed. */
+  targets_customised: boolean;
+  onboarded_at: string;
+  updated_at: string;
+}
+
+/** Age in whole years from a birth year. Deliberately year-granular: we never ask for a birthday. */
+export const ageFromBirthYear = (birthYear: number, now: Date = new Date()) => now.getFullYear() - birthYear;
+
 // ── Units ────────────────────────────────────────────────────────────────────
 // People think in lbs and feet; the formulas are metric. (lbs ↔ kg is in nutrition.ts.)
 

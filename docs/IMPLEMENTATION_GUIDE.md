@@ -25,7 +25,8 @@ nutrition-tracker/
 │   └── src/
 │       ├── schemas.ts        zod schemas for every request (the API validates with them)
 │       ├── types.ts          Every entity and response type
-│       ├── presets.ts        Named plans → daily targets (pure functions), floors, sources
+│       ├── presets.ts        Named plans → daily targets (pure functions), floors, sources,
+│       │                     and the profile schema stored per user
 │       ├── nutrition.ts      Net carbs, serving scaling, day totals, exercise calories
 │       ├── date.ts           Local-timezone dates
 │       ├── session.ts        Token handling, refresh-and-retry (framework-free)
@@ -316,7 +317,7 @@ When an exercise is logged, it effectively increases the eating budget for that 
 
 ## 10. Daily Targets
 
-> **Being replaced.** Targets are now computed per person by a preset (`shared/src/presets.ts`, `docs/API_SPEC.md` → Presets). The Galveston-style preset reproduces the numbers below exactly for the person the app was first built for, which is a test. The web app still uses these constants until onboarding (#15) stores each user's targets.
+> **Superseded on the server.** Targets are computed per person by a preset and stored on their profile (`shared/src/presets.ts`, `docs/API_SPEC.md` → Profile and Presets). The Galveston-style preset reproduces the numbers below exactly for the person the app was first built for, which is a test. The web app still displays these constants until its onboarding screens land.
 
 To change a preset's rules, edit its recipe in `presets.ts` and its worked examples in `presets.test.ts`. A property test runs every preset over several thousand people and fails if any result breaks the calorie floor or ceiling, goes negative, starves fat below 20% of calories, or does not add up.
 

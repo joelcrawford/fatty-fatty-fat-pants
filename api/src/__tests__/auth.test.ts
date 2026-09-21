@@ -275,9 +275,9 @@ describe("logging out", () => {
 });
 
 describe("GET /api/auth/me", () => {
-  it("returns the account without any secret fields", async () => {
+  it("returns the account without any secret fields, plus whether onboarding is done", async () => {
     const res = await t.api.get("/api/auth/me");
-    expect(res.body.data).toEqual({ id: t.userId, email: t.email, name: "Test User", created_at: expect.any(String) });
+    expect(res.body.data).toEqual({ id: t.userId, email: t.email, name: "Test User", created_at: expect.any(String), onboarded: false });
   });
 });
 

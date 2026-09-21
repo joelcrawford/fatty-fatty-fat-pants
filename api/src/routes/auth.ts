@@ -6,6 +6,7 @@ import { Mailer } from "../auth/mailer";
 import { hashPassword, verifyPassword, burnPasswordTime } from "../auth/passwords";
 import { signAccessToken, newOpaqueToken, hashOpaqueToken, nowSeconds } from "../auth/tokens";
 import { requireAuth, currentUserId } from "../auth/middleware";
+import { isOnboarded } from "./profile";
 import {
   validate, registerSchema, loginSchema, refreshSchema,
   forgotPasswordSchema, resetPasswordSchema, deleteAccountSchema,
@@ -194,7 +195,8 @@ export function createAuthRouter(db: Db, config: Config, mailer: Mailer): Router
   // GET /api/auth/me
   router.get("/me", authed, (req: Request, res: Response) => {
     try {
-      res.json({ success: true, data: publicUser(findById.get(currentUserId(req)) as UserRow) });
+      const userId = currentUserId(req);
+      res.json({ success: true, data: { ...publicUser(findById.get(userId) as UserRow), onboarded: isOnboarded(db, userId) } });
     } catch (err) {
       res.status(500).json({ success: false, error: "Failed to load account" });
     }
