@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { api, FoodEntry, ExerciseEntry } from "./api";
 import { daysAgo, useToday } from "./date";
+import { AccountPanel } from "./AuthScreens";
+import type { User } from "./session";
 
 // ── Targets (Galveston-modified for Katarina) ─────────────────────────────────
 const DAILY_CAL = 1200;
@@ -191,7 +193,8 @@ const MEAL_PLANS = [
 const r = (n: number, d = 1) => Math.round(n * Math.pow(10, d)) / Math.pow(10, d);
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function NutriTracker() {
+export default function NutriTracker({ user }: { user: User }) {
+  const [accountOpen, setAccountOpen] = useState(false);
   const date = useToday();
   const [tab, setTab] = useState("dashboard");
   const [foodLog, setFoodLog] = useState<FoodEntry[]>([]);
@@ -383,11 +386,18 @@ export default function NutriTracker() {
 
       {toast && <div className="flash" style={{ position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", background: C.primary, color: "white", padding: "10px 20px", borderRadius: 20, fontSize: 13, fontWeight: 600, zIndex: 999, boxShadow: "0 4px 16px rgba(0,0,0,0.2)" }}>✓ {toast}</div>}
 
+      {accountOpen && <AccountPanel onClose={() => setAccountOpen(false)} />}
+
       {apiError && <div style={{ background: "#D64545", color: "white", padding: "10px 16px", fontSize: 12, textAlign: "center" }}>⚠ Cannot reach API — check your connection or server status</div>}
 
       {/* Header */}
       <div style={{ background: C.primary, padding: "22px 20px 0", color: "white", flexShrink: 0 }}>
-        <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 21, marginBottom: 2 }}>Katarina's Nutrition</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 21, marginBottom: 2 }}>{user.name ? `${user.name}'s Nutrition` : "Nutrition"}</div>
+          <button aria-label="Account" onClick={() => setAccountOpen(true)} style={{ background: "rgba(255,255,255,0.18)", border: "none", color: "white", width: 34, height: 34, borderRadius: 17, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+            {(user.name || user.email).charAt(0).toUpperCase()}
+          </button>
+        </div>
         <div style={{ fontSize: 12, opacity: 0.65, marginBottom: 18 }}>{new Date().toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric" })}</div>
         <div style={{ display: "flex", gap: 0, background: "rgba(0,0,0,0.15)", borderRadius: 12, padding: "12px 8px", marginBottom: 16 }}>
           {[{ label: "Goal", val: DAILY_CAL, color: "white" }, { label: "Food", val: Math.round(totalCal), color: "white" }, { label: "Exercise", val: Math.round(exCal), color: "#FBCFA8" }, { label: "Remaining", val: Math.abs(Math.round(remaining)), color: isOver ? "#FF9B9B" : "#A8FBCA" }].map(({ label, val, color }, i) => (

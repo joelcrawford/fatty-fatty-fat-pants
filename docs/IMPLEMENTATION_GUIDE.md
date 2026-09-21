@@ -44,8 +44,12 @@ nutrition-tracker/
 │
 ├── frontend/                 React 18 + TypeScript + Vite
 │   ├── src/
+│   │   ├── Root.tsx          Gate: reset-password page, login screens, or the app
+│   │   ├── AuthScreens.tsx   Login, register, forgot/reset password, account panel
+│   │   ├── session.ts        Tokens, refresh-and-retry, login/logout (framework-free)
 │   │   ├── App.tsx           Full application (all tabs and UI)
-│   │   ├── api.ts            Typed API client (all backend calls)
+│   │   ├── api.ts            Typed API client (all backend calls, via session)
+│   │   ├── date.ts           Local-timezone dates and the useToday hook
 │   │   └── main.tsx          React DOM entry point
 │   ├── public/
 │   │   └── manifest.json     PWA manifest (Add to Home Screen)
@@ -136,6 +140,16 @@ another's data. New endpoints need a case in that file.
 
 CI (`.github/workflows/ci.yml`) runs build and test for both packages on every
 pull request and every push to `main`.
+
+### Your first account
+
+Registration is by invite, so mint a code, then use "I have an invite code" on the login screen:
+
+```bash
+cd backend && npm run invite -- --note "me"
+```
+
+In development no email is sent. "Forgot password" prints the reset link in the backend's terminal; open it in the browser.
 
 ### Verify it's working
 ```bash
@@ -430,7 +444,7 @@ SQLite databases in WAL mode are safe to copy while the server is running.
 
 ## 15. Known Limitations (v1)
 
-- The web app has no login screen yet, so it cannot talk to the API now that every route requires an account (tracked as its own issue)
+- The web app keeps its refresh token in `localStorage` so a reload stays logged in. That is readable by any script on the origin; the reasoning and mitigations are written up at the bottom of `frontend/src/session.ts`. The mobile app will use the device's secure storage instead
 - Food library is static — editing requires a code change and redeploy
 - No barcode scanner — manual food search only
 - History date chips show dates with food logged; gaps are normal

@@ -1,20 +1,10 @@
-// api.ts — all communication with the Node.js backend
-// Swap VITE_API_URL in .env.production to point at your DigitalOcean server
+// api.ts — all communication with the Node.js backend.
+// Every call goes through the session, which attaches the access token and
+// transparently refreshes it once when it expires (see session.ts).
 
-const BASE = import.meta.env.VITE_API_URL || "";
+import { session } from "./session";
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Unknown error" }));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
-  const json = await res.json();
-  return json.data as T;
-}
+const request = <T>(path: string, options?: RequestInit): Promise<T> => session.request<T>(path, options);
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
