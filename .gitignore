@@ -20,3 +20,6 @@ data/
 # Editor
 .vscode/
 .idea/
+
+# Test output
+coverage/

@@ -21,8 +21,10 @@ A full-stack nutrition and fitness tracking web application, designed as a perso
 nutrition-tracker/
 ├── backend/                  Node.js + TypeScript + Express + SQLite
 │   ├── src/
-│   │   ├── index.ts          Express server entry point
+│   │   ├── index.ts          Entry point: opens the database, starts listening
+│   │   ├── app.ts            createApp(db): middleware + routes, no side effects
 │   │   ├── types.ts          Shared TypeScript interfaces
+│   │   ├── __tests__/        Jest + supertest suites (in-memory SQLite)
 │   │   ├── db/
 │   │   │   ├── index.ts      SQLite connection; runs schema.sql on start
 │   │   │   └── schema.sql    Single source of truth for the schema + views
@@ -113,6 +115,23 @@ docker compose up
 # Backend:  http://localhost:3001
 # SQLite persisted in Docker volume: nutrition-db
 ```
+
+### Running the tests
+
+```bash
+cd backend
+npm test            # Jest + supertest, with coverage thresholds
+npm run test:watch
+```
+
+Every test gets its own in-memory SQLite database via `makeTestContext()` in
+`src/__tests__/helpers.ts`, so tests never touch `./data/nutrition.db` and never
+see each other's rows. This is a multi-user app: tests act as `t.userId` rather
+than a literal id, and `isolation.test.ts` proves one user cannot read or delete
+another's data. New endpoints need a case in that file.
+
+CI (`.github/workflows/ci.yml`) runs build and test for both packages on every
+pull request and every push to `main`.
 
 ### Verify it's working
 ```bash
