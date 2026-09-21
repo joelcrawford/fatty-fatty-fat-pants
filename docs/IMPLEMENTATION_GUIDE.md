@@ -19,7 +19,19 @@ A full-stack nutrition and fitness tracking web application, designed as a perso
 
 ```
 nutrition-tracker/
-├── backend/                  Node.js + TypeScript + Express + SQLite
+├── package.json              npm workspace root: ONE install, ONE lockfile for everything
+│
+├── shared/                   @nutrition/shared — used by the API and every client
+│   └── src/
+│       ├── schemas.ts        zod schemas for every request (the API validates with them)
+│       ├── types.ts          Every entity and response type
+│       ├── nutrition.ts      Net carbs, serving scaling, day totals, exercise calories
+│       ├── date.ts           Local-timezone dates
+│       ├── session.ts        Token handling, refresh-and-retry (framework-free)
+│       ├── apiClient.ts      Typed client for every endpoint
+│       └── gtin.ts           Barcode check digits
+│
+├── api/                  Node.js + TypeScript + Express + SQLite
 │   ├── src/
 │   │   ├── index.ts          Entry point: opens the database, starts listening
 │   │   ├── app.ts            createApp(db): middleware + routes, no side effects
@@ -44,7 +56,7 @@ nutrition-tracker/
 │   ├── .env.example
 │   └── .gitignore
 │
-├── frontend/                 React 18 + TypeScript + Vite
+├── web/                 React 18 + TypeScript + Vite
 │   ├── src/
 │   │   ├── Root.tsx          Gate: reset-password page, login screens, or the app
 │   │   ├── AuthScreens.tsx   Login, register, forgot/reset password, account panel
@@ -96,25 +108,30 @@ For deployment:
 
 ### Option A — Without Docker (recommended for active development)
 
-**Backend:**
+This is an npm workspace. Install **once, at the repo root**; never run `npm install` inside `api/`, `web/` or `shared/`.
+
 ```bash
-cd backend
-npm install
-cp .env.example .env
-npm run dev
-# API running at http://localhost:3001
-# SQLite database auto-created at ./data/nutrition.db on first run
+npm install                      # installs everything and builds shared/
+cp api/.env.example api/.env
+cp web/.env.example web/.env.local   # leave VITE_API_URL blank: Vite proxies /api → localhost:3001
+
+npm run dev:api                  # terminal 1 → http://localhost:3001
+npm run dev:web                  # terminal 2 → http://localhost:5173
+npm run dev:shared               # terminal 3, only while editing shared/ (rebuilds on save)
 ```
 
-**Frontend (separate terminal):**
-```bash
-cd frontend
-npm install
-cp .env.example .env.local
-# Leave VITE_API_URL blank — Vite proxies /api → localhost:3001
-npm run dev
-# App running at http://localhost:5173
-```
+The SQLite database is created at `api/data/nutrition.db` on first run (override with `DB_PATH`).
+
+`npm test` and `npm run build` at the root run every package. To target one: `npm test -w @nutrition/api`.
+
+### Working on the shared package
+
+`api/` and `web/` import `@nutrition/shared` from its **built output** (`shared/dist`), not its source. That is what lets one package serve Node (CommonJS), Vite (ES modules) and, soon, React Native without per-tool configuration. The consequences:
+
+- `npm install` builds it, and `npm test` in `api/` or `web/` rebuilds it first, so tests never run against stale output.
+- While editing `shared/` with a dev server running, keep `npm run dev:shared` going, or run `npm run build -w @nutrition/shared` after a change.
+- `shared/` must stay platform-neutral: no React, no DOM globals, no Node built-ins. `shared/src/purity.test.ts` enforces this, because a violation breaks a *different* package at runtime.
+- A request shape changes in exactly one place, `shared/src/schemas.ts`. The API validates with it and the clients are typed by it.
 
 ### Option B — With Docker
 
@@ -129,9 +146,10 @@ docker compose up
 ### Running the tests
 
 ```bash
-cd backend
-npm test            # Jest + supertest, with coverage thresholds
-npm run test:watch
+npm test                          # everything: shared, api, web
+npm test -w @nutrition/api        # Jest + supertest, with coverage thresholds
+npm test -w @nutrition/shared     # Vitest
+npm test -w @nutrition/web        # Vitest + Testing Library
 ```
 
 Every test gets its own in-memory SQLite database via `makeTestContext()` in
@@ -140,7 +158,7 @@ see each other's rows. This is a multi-user app: tests act as `t.userId` rather
 than a literal id, and `isolation.test.ts` proves one user cannot read or delete
 another's data. New endpoints need a case in that file.
 
-CI (`.github/workflows/ci.yml`) runs build and test for both packages on every
+CI (`.github/workflows/ci.yml`) installs once at the root, then typechecks, builds and tests all three packages on every
 pull request and every push to `main`.
 
 ### Your first account
@@ -148,7 +166,7 @@ pull request and every push to `main`.
 Registration is by invite, so mint a code, then use "I have an invite code" on the login screen:
 
 ```bash
-cd backend && npm run invite -- --note "me"
+npm run invite -- --note "me"          # from the repo root
 ```
 
 In development no email is sent. "Forgot password" prints the reset link in the backend's terminal; open it in the browser.
@@ -170,6 +188,7 @@ curl http://localhost:3001/health
 | `PORT` | No | `3001` | Port the Express server listens on |
 | `FRONTEND_URL` | Yes (prod) | — | Frontend origin for CORS whitelist |
 | `NODE_ENV` | No | `development` | Affects logging verbosity |
+| `DB_PATH` | No | `./data/nutrition.db` from where the process starts | Absolute path to the SQLite file. Set in Docker and production so the location does not depend on the working directory |
 | `JWT_SECRET` | **Yes (prod)** | random per start | Access-token signing key, min 32 chars (`openssl rand -hex 32`). The server refuses to start in production without it |
 | `TRUST_PROXY` | Yes (prod) | `0` | Set to `1` behind Nginx so rate limiting sees real client IPs |
 | `RESEND_API_KEY` | Yes (prod) | — | Without it, emails are printed to the server log instead of sent |
@@ -192,7 +211,7 @@ In production, Vite bakes `VITE_API_URL` into the built JS bundle at build time.
 ### Why SQLite and not PostgreSQL?
 SQLite is appropriate for a single-user application with no concurrent write requirements. It requires zero server infrastructure — the database is a single file (`nutrition.db`) that lives alongside the Node.js process. The schema is written to be PostgreSQL-compatible if migration becomes necessary (multi-user, higher traffic).
 
-To migrate to PostgreSQL later: replace `better-sqlite3` with `pg`, update connection syntax, and run the files in `backend/src/db/migrations/` against a Postgres instance.
+To migrate to PostgreSQL later: replace `better-sqlite3` with `pg`, update connection syntax, and run the files in `api/src/db/migrations/` against a Postgres instance.
 
 ### Why a monolith frontend (one App.tsx)?
 At ~800 lines, the component is large but manageable for a solo-developer or small team. It was built this way for speed and simplicity. If the codebase grows, refactor into:
@@ -224,24 +243,23 @@ This is a multi-user app. Accounts are created by invitation, passwords are hash
 
 **Inviting someone**
 ```bash
-cd backend
-npm run invite -- --note "for Sam" --days 14      # prints e.g. K7QM-2XRD-9HTW
+npm run invite -- --note "for Sam" --days 14      # from the repo root      # prints e.g. K7QM-2XRD-9HTW
 # production:
-docker exec <api container> node dist/scripts/create-invite.js --note "for Sam"
+docker exec <api container> npm run invite -w @nutrition/api -- --note "for Sam"
 ```
 The first account on a new server is created the same way.
 
 ### Database migrations
-`backend/src/db/migrations/NNNN_name.sql`, applied in order on startup, each in its own transaction, each recorded in the `schema_migrations` table so it runs exactly once. **Never edit a migration that has shipped; add a new file.** A migration that fails, or that leaves a dangling foreign key, rolls back completely and stops the server from starting.
+`api/src/db/migrations/NNNN_name.sql`, applied in order on startup, each in its own transaction, each recorded in the `schema_migrations` table so it runs exactly once. **Never edit a migration that has shipped; add a new file.** A migration that fails, or that leaves a dangling foreign key, rolls back completely and stops the server from starting.
 
 ### Where the food, exercise and meal-plan catalog lives
-In the database, served by `/api/foods`, `/api/exercises` and `/api/meal-plans`, so the web app and the mobile app share one catalog and custom foods and barcode lookups have somewhere to go. Built-in rows are defined in `backend/src/db/seed/catalog.json` and synced into the database on every start (see sections 7 and 8). Custom foods sit in the same `foods` table with a `user_id`, and are visible only to their owner. Clients still get instant search: the catalog is small enough to fetch whole and filter locally.
+In the database, served by `/api/foods`, `/api/exercises` and `/api/meal-plans`, so the web app and the mobile app share one catalog and custom foods and barcode lookups have somewhere to go. Built-in rows are defined in `api/src/db/seed/catalog.json` and synced into the database on every start (see sections 7 and 8). Custom foods sit in the same `foods` table with a `user_id`, and are visible only to their owner. Clients still get instant search: the catalog is small enough to fetch whole and filter locally.
 
 ---
 
 ## 7. Adding or Correcting Built-in Foods
 
-Edit `backend/src/db/seed/catalog.json` and restart the API. Rows are matched by `seed_key` and updated in place, so a corrected macro reaches databases that already exist, ids never change, and users' custom foods are never touched.
+Edit `api/src/db/seed/catalog.json` and restart the API. Rows are matched by `seed_key` and updated in place, so a corrected macro reaches databases that already exist, ids never change, and users' custom foods are never touched.
 
 ```json
 { "seed_key": "food-122", "name": "Walnut Butter", "category": "Fats", "unit": "tbsp", "default_serving": 2,
@@ -319,7 +337,7 @@ The app is configured for installation as a PWA via:
 - `public/manifest.json` — PWA name, icons, display mode
 - Theme colour `#3D5A4C` matches the app's primary green
 
-**Required before launch:** Two app icon files must be placed in `/frontend/public/`:
+**Required before launch:** Two app icon files must be placed in `/web/public/`:
 - `icon-192.png` — 192×192 pixels, square, transparent or coloured background
 - `icon-512.png` — 512×512 pixels, same design
 
@@ -337,7 +355,7 @@ Any square image works. The primary green (`#3D5A4C`) as background with a white
 # On the Droplet
 cd /var/www
 git clone <repo> nutrition-tracker
-cd nutrition-tracker/backend
+cd nutrition-tracker/api
 npm install
 npm run build
 
@@ -373,7 +391,7 @@ server {
 ### Frontend
 
 ```bash
-cd nutrition-tracker/frontend
+cd nutrition-tracker/web
 echo "VITE_API_URL=https://api.yourdomain.com" > .env.production
 npm install && npm run build
 # dist/ folder is the deployable output
@@ -388,7 +406,7 @@ server {
     ssl_certificate     /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
 
-    root /var/www/nutrition-tracker/frontend/dist;
+    root /var/www/nutrition-tracker/web/dist;
     index index.html;
 
     location / {
@@ -412,11 +430,11 @@ certbot --nginx -d yourdomain.com -d api.yourdomain.com
 
 ```bash
 # Manual backup
-cp /var/www/nutrition-tracker/backend/data/nutrition.db \
+cp /var/www/nutrition-tracker/api/data/nutrition.db \
    /var/backups/nutrition-$(date +%Y%m%d).db
 
 # Cron backup (daily at 2am)
-0 2 * * * cp /var/www/nutrition-tracker/backend/data/nutrition.db \
+0 2 * * * cp /var/www/nutrition-tracker/api/data/nutrition.db \
              /var/backups/nutrition-$(date +\%Y\%m\%d).db
 ```
 
@@ -442,7 +460,7 @@ SQLite databases in WAL mode are safe to copy while the server is running.
 
 ## 15. Known Limitations (v1)
 
-- The web app keeps its refresh token in `localStorage` so a reload stays logged in. That is readable by any script on the origin; the reasoning and mitigations are written up at the bottom of `frontend/src/session.ts`. The mobile app will use the device's secure storage instead
+- The web app keeps its refresh token in `localStorage` so a reload stays logged in. That is readable by any script on the origin; the reasoning and mitigations are written up at the bottom of `web/src/session.ts`. The mobile app will use the device's secure storage instead
 - Built-in foods are edited in `catalog.json` and need a restart; users can add their own foods in the app. Custom foods cannot yet be edited, only deleted and re-added
 - Barcode lookup exists in the API (`GET /api/foods/barcode/:barcode`) but no client scans yet; that arrives with the mobile app
 - History date chips show dates with food logged; gaps are normal

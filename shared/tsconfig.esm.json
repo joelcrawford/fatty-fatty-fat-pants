@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "module": "ES2020", "outDir": "./dist/esm", "sourceMap": true },
+  "exclude": ["src/**/*.test.ts"]
+}

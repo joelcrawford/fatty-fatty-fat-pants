@@ -1,0 +1,14 @@
+# The Docker build context is the repo root (images need shared/ as well as
+# their own package), so keep host artefacts out of it. node_modules matters
+# most: the host's native binaries (better-sqlite3) do not run on Alpine.
+**/node_modules
+**/dist
+**/coverage
+**/data
+**/.env
+**/.env.*
+!**/.env.example
+.git
+.github
+docs
+*.md

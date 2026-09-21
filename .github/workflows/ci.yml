@@ -11,37 +11,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  backend:
-    name: API — build and test
+  test:
+    name: Build and test
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
-          cache-dependency-path: backend/package-lock.json
+      # One install for the whole workspace. The root postinstall builds
+      # shared/, which api/ and web/ import.
       - run: npm ci
-      - run: npm run build
-      - run: npm test
 
-  frontend:
-    name: Web — build and test
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
-      - run: npm run build
-      # Runs as soon as the web app has a test script; no-op until then.
-      - run: npm test --if-present
+      - name: shared — typecheck and test
+        run: npm run typecheck -w @nutrition/shared && npm test -w @nutrition/shared
+
+      - name: api — build and test
+        run: npm run build -w @nutrition/api && npm test -w @nutrition/api
+
+      - name: web — build and test
+        run: npm run build -w @nutrition/web && npm test -w @nutrition/web
