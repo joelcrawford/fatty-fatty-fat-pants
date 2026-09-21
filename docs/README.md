@@ -15,8 +15,8 @@ It is not a generic app. Every number, every food, every exercise, and every des
 
 ```
 project-bundle/
-├── backend/              Node.js + TypeScript + Express + SQLite API
-├── frontend/             React 18 + TypeScript + Vite PWA
+├── api/              Node.js + TypeScript + Express + SQLite API
+├── web/             React 18 + TypeScript + Vite PWA
 ├── docker/
 │   └── docker-compose.yml  Local development stack
 └── docs/
@@ -31,11 +31,12 @@ project-bundle/
 ## Quick Start
 
 ```bash
-# Backend (Terminal 1)
-cd backend && npm install && cp .env.example .env && npm run dev
+npm install                       # once, at the repo root (npm workspace)
+cp api/.env.example api/.env && cp web/.env.example web/.env.local
 
-# Frontend (Terminal 2)
-cd frontend && npm install && cp .env.example .env.local && npm run dev
+npm run invite -- --note "me"     # registration is by invite: prints a code
+npm run dev:api                   # Terminal 1
+npm run dev:web                   # Terminal 2
 
 # Open http://localhost:5173
 ```
@@ -132,9 +133,9 @@ Net carbs = total carbs − fibre. Exercise calories are added back to the daily
 
 ## What Still Needs To Be Done Before Launch
 
-- [ ] Add app icons: `icon-192.png` and `icon-512.png` to `frontend/public/`
-- [ ] Set production domain in `backend/.env` (`FRONTEND_URL`)
-- [ ] Set API URL in `frontend/.env.production` (`VITE_API_URL`)
+- [ ] Add app icons: `icon-192.png` and `icon-512.png` to `web/public/`
+- [ ] Set production domain in `api/.env` (`FRONTEND_URL`)
+- [ ] Set API URL in `web/.env.production` (`VITE_API_URL`)
 - [ ] Configure Nginx for both frontend and API domains
 - [ ] Issue SSL certificates via Certbot
 - [ ] Start backend with PM2 and save process list
@@ -169,9 +170,9 @@ Net carbs = total carbs − fibre. Exercise calories are added back to the daily
 | `docs/IMPLEMENTATION_GUIDE.md` | Developer setup, architecture decisions, deployment instructions, known limitations |
 | `docs/DESIGN_STYLE_GUIDE.md` | Colour palette, typography, spacing, component specs, interaction patterns |
 | `docs/API_SPEC.md` | Every endpoint with request/response examples, field descriptions, error codes |
-| `backend/src/db/migrations/` | Numbered SQL migrations: schema, indexes, views. Applied once each on startup |
-| `backend/README.md` | Backend-specific quick start and deployment |
-| `frontend/README.md` | Frontend-specific quick start, PWA install, deployment |
+| `api/src/db/migrations/` | Numbered SQL migrations: schema, indexes, views. Applied once each on startup |
+| `api/README.md` | Backend-specific quick start and deployment |
+| `web/README.md` | Frontend-specific quick start, PWA install, deployment |
 
 ---
 

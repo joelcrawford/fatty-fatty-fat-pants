@@ -8,8 +8,8 @@
 #   docker compose logs -f      → follow logs
 #   docker compose down         → stop everything
 #
-# Frontend: http://localhost:5173
-# Backend:  http://localhost:3001
+# Web app: http://localhost:5173
+# API:     http://localhost:3001
 # Health:   http://localhost:3001/health
 # =============================================================================
 
@@ -18,8 +18,8 @@ services:
   # ── Backend: Node.js + TypeScript + Express + SQLite ──────────────────────
   backend:
     build:
-      context: ../backend
-      dockerfile: Dockerfile
+      context: ..                 # repo root: the image needs shared/ too
+      dockerfile: api/Dockerfile
     container_name: nutrition-api
     ports:
       - "3001:3001"
@@ -29,9 +29,9 @@ services:
       NODE_ENV: development
     volumes:
       # Persist SQLite database file outside the container
-      - nutrition-db:/app/data
+      - nutrition-db:/app/data   # DB_PATH in the image points here
       # Hot reload: mount source for ts-node-dev
-      - ../backend/src:/app/src
+      - ../api/src:/app/api/src
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3001/health"]
@@ -42,8 +42,8 @@ services:
   # ── Frontend: React + TypeScript + Vite ───────────────────────────────────
   frontend:
     build:
-      context: ../frontend
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: web/Dockerfile
     container_name: nutrition-app
     ports:
       - "5173:5173"
@@ -53,7 +53,7 @@ services:
     depends_on:
       - backend
     volumes:
-      - ../frontend/src:/app/src  # Hot reload
+      - ../web/src:/app/web/src  # Hot reload
     restart: unless-stopped
 
 volumes:

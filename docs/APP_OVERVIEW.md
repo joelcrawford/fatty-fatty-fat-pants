@@ -316,7 +316,7 @@ All tables include a `user_id` foreign key, making the schema ready for multi-us
 ### Backend Deployment
 ```bash
 # Upload
-scp -r nutrition-backend/ root@YOUR_IP:/var/www/nutrition-backend
+scp -r nutrition-api/ root@YOUR_IP:/var/www/nutrition-backend
 
 # On the Droplet
 cd /var/www/nutrition-backend

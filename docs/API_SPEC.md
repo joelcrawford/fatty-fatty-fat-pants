@@ -105,7 +105,7 @@ The unauthenticated endpoints share a budget of 20 requests per 15 minutes per I
 
 ## Validation
 
-Every request is validated before it reaches the database (`backend/src/validation.ts`). A request that fails is rejected with **400** and stores nothing. All problems are reported at once. `error` is a single sentence suitable for showing to a person; `details[].path` names the field so a form can highlight it (for batch requests the path includes the index, e.g. `1.meal`).
+Every request is validated before it reaches the database (`api/src/validation.ts`). A request that fails is rejected with **400** and stores nothing. All problems are reported at once. `error` is a single sentence suitable for showing to a person; `details[].path` names the field so a form can highlight it (for batch requests the path includes the index, e.g. `1.meal`).
 
 | Rule | Applies to |
 |---|---|
@@ -146,7 +146,7 @@ Returns server status. Use this to verify the API is reachable before making dat
 
 ## Catalog
 
-Foods, exercises and meal plans live in the database. Built-in rows come from `backend/src/db/seed/catalog.json` and are the same for everyone; custom foods belong to the user who added them and are invisible to everyone else. All catalog endpoints require authentication.
+Foods, exercises and meal plans live in the database. Built-in rows come from `api/src/db/seed/catalog.json` and are the same for everyone; custom foods belong to the user who added them and are invisible to everyone else. All catalog endpoints require authentication.
 
 > **Naming:** `/api/food` (singular) is the **log** of what was eaten. `/api/foods` (plural) is the **catalog** of things that can be eaten.
 

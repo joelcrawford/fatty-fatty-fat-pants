@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    // DOM is here for the TYPES of fetch/Response/RequestInit only, which exist
+    // in browsers, React Native and Node 20 alike. Nothing in this package may
+    // touch window, document, localStorage or any React or Node-only API.
+    "lib": ["ES2020", "DOM"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "rootDir": "./src",
+    "types": []
+  },
+  "include": ["src/**/*"]
+}

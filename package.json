@@ -1,0 +1,23 @@
+{
+  "name": "nutrition-tracker",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Nutrition tracker monorepo: api, web, mobile (soon) and the shared package they all use",
+  "workspaces": [
+    "shared",
+    "api",
+    "web"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "postinstall": "npm run build -w @nutrition/shared",
+    "build": "npm run build -w @nutrition/shared && npm run build -w @nutrition/api && npm run build -w @nutrition/web",
+    "test": "npm test -w @nutrition/shared && npm test -w @nutrition/api && npm test -w @nutrition/web",
+    "dev:api": "npm run dev -w @nutrition/api",
+    "dev:web": "npm run dev -w @nutrition/web",
+    "dev:shared": "npm run dev -w @nutrition/shared",
+    "invite": "npm run invite -w @nutrition/api --"
+  }
+}
