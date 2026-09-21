@@ -169,7 +169,7 @@ Net carbs = total carbs − fibre. Exercise calories are added back to the daily
 | `docs/IMPLEMENTATION_GUIDE.md` | Developer setup, architecture decisions, deployment instructions, known limitations |
 | `docs/DESIGN_STYLE_GUIDE.md` | Colour palette, typography, spacing, component specs, interaction patterns |
 | `docs/API_SPEC.md` | Every endpoint with request/response examples, field descriptions, error codes |
-| `backend/src/db/schema.sql` | Full SQLite schema with indexes, views, and comments. Executed by the backend on every start |
+| `backend/src/db/migrations/` | Numbered SQL migrations: schema, indexes, views. Applied once each on startup |
 | `backend/README.md` | Backend-specific quick start and deployment |
 | `frontend/README.md` | Frontend-specific quick start, PWA install, deployment |
 

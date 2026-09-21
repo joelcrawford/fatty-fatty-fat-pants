@@ -1,35 +1,91 @@
 import request from "supertest";
 import { createApp } from "../app";
+import { Config, loadConfig } from "../config";
 import { openDatabase, Db } from "../db";
+import { Mail, Mailer } from "../auth/mailer";
+import { hashPassword } from "../auth/passwords";
+import { signAccessToken } from "../auth/tokens";
+import { createInvite } from "../auth/invites";
 
 /**
  * This is a multi-user app. Tests never talk to the API as "nobody" by
- * accident: `api` is a client acting as `userId`. Today there is no auth, so
- * that is simply the seeded user the routes are hardcoded to. When auth lands
- * (#3), makeTestContext() creates a user, mints a token, and sets it as a
- * default header on this agent — and no test file has to change.
+ * accident:
+ *
+ *   t.api        a client logged in as t.userId
+ *   t.anonymous  a client with no credentials, for proving routes are locked
+ *   t.as(id)     a client logged in as someone else
  *
  * Rules for tests:
  *  - assert against `t.userId`, never a literal id
  *  - use seedOtherUser() to prove one user's data is invisible to another
  */
+export type Client = ReturnType<typeof request.agent>;
+
 export interface TestContext {
   db: Db;
-  /** Client acting as the current user. */
-  api: ReturnType<typeof request.agent>;
-  /** The user `api` acts as. */
+  config: Config;
+  api: Client;
+  anonymous: Client;
+  as(userId: number): Client;
   userId: number;
+  email: string;
+  password: string;
+  /** Every email the app tried to send, oldest first. */
+  outbox: Mail[];
+  invite(opts?: { note?: string; expiresInDays?: number }): string;
+}
+
+export const PASSWORD = "correct horse battery";
+
+// Real scrypt, toy cost: the code path is the production one, at ~1ms a hash.
+export const testConfig = (overrides: Partial<Config> = {}): Config => ({
+  ...loadConfig({ NODE_ENV: "test", JWT_SECRET: "test-secret-test-secret-test-secret-1234" }),
+  scrypt: { N: 2 ** 4, r: 8, p: 1 },
+  authRateLimit: null,
+  passwordResetUrlTemplate: "app://reset?token={token}",
+  ...overrides,
+});
+
+let userCounter = 0;
+
+/** Insert a user directly. Fast, and independent of the register endpoint. */
+export async function createUser(db: Db, config: Config, email?: string, password: string = PASSWORD) {
+  const address = email ?? `user${++userCounter}@example.com`;
+  const id = Number(
+    db.prepare("INSERT INTO users (email, password_hash, name) VALUES (?, ?, 'Test User')")
+      .run(address, await hashPassword(password, config.scrypt)).lastInsertRowid
+  );
+  return { id, email: address, password };
 }
 
 /**
- * A fresh app on a fresh in-memory database. Call it in beforeEach so no test
- * can see another test's rows.
+ * A fresh app on a fresh in-memory database, with one user already logged in.
+ * Call it in beforeEach so no test can see another test's rows.
  */
-export function makeTestContext(): TestContext {
+export async function makeTestContext(overrides: Partial<Config> = {}): Promise<TestContext> {
   const db = openDatabase(":memory:");
-  const api = request.agent(createApp(db));
-  // #3: create a user here, then api.set("Authorization", `Bearer ${token}`)
-  return { db, api, userId: 1 };
+  const config = testConfig(overrides);
+  const outbox: Mail[] = [];
+  const mailer: Mailer = { send: async (mail) => { outbox.push(mail); } };
+  const app = createApp(db, { config, mailer });
+
+  const user = await createUser(db, config);
+
+  const as = (userId: number): Client => {
+    const { token_version } = db.prepare("SELECT token_version FROM users WHERE id = ?").get(userId) as { token_version: number };
+    const token = signAccessToken(userId, token_version, config.jwtSecret, config.accessTokenTtlSeconds);
+    return request.agent(app).set("Authorization", `Bearer ${token}`);
+  };
+
+  return {
+    db, config, outbox, as,
+    api: as(user.id),
+    anonymous: request.agent(app),
+    userId: user.id,
+    email: user.email,
+    password: user.password,
+    invite: (opts) => createInvite(db, opts),
+  };
 }
 
 export const DAY = "2026-04-26";
@@ -65,10 +121,9 @@ export interface OtherUser {
  * written straight to the database. The numbers are deliberately huge so that
  * any leak into the current user's totals is unmissable.
  */
-export function seedOtherUser(db: Db): OtherUser {
-  const userId = Number(
-    db.prepare("INSERT INTO users (name, email) VALUES ('Other User', 'other@example.com')").run().lastInsertRowid
-  );
+export async function seedOtherUser(t: Pick<TestContext, "db" | "config">): Promise<OtherUser> {
+  const { db } = t;
+  const { id: userId } = await createUser(db, t.config, "other@example.com");
   const foodId = Number(
     db.prepare(
       `INSERT INTO food_logs (user_id, date, meal, food_name, amount, cal, protein, carbs, fat, fiber)

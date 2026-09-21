@@ -32,6 +32,77 @@ Every endpoint returns the same wrapper:
 
 ---
 
+## Authentication
+
+This is a multi-user API. Everything except `/health` and the public auth endpoints below requires
+
+```
+Authorization: Bearer <access_token>
+```
+
+and answers **401** `{ "success": false, "error": "Authentication required" }` without it. Every row belongs to the authenticated user; there is no way to address another user's data, and a client-supplied `user_id` is ignored.
+
+**Two tokens**
+
+| | Access token | Refresh token |
+|---|---|---|
+| What | JWT (HS256) | 256 random bits, opaque |
+| Lifetime | 15 minutes | 60 days |
+| Sent | on every request, in the header | only to `/api/auth/refresh` and `/api/auth/logout` |
+| Server stores | nothing | a SHA-256 hash, never the token |
+| Store on device | memory | secure storage (`expo-secure-store`) |
+
+**Client loop:** on a 401 from a data endpoint, call `refresh` once, retry the request, and send the user to the login screen if the refresh also fails. Each refresh returns a **new** refresh token and retires the old one; always save the new one.
+
+**When sessions end early.** Password reset, logout-all, and account deletion take effect at once on every device, including access tokens already issued. If a refresh token that was already rotated is presented again, it has been copied, so every session for that user is ended. A logged-out token being retried is just refused.
+
+### POST /api/auth/register
+By invitation. Codes are minted on the server with `npm run invite` (see the Implementation Guide).
+
+```json
+{ "email": "sam@example.com", "password": "at least ten characters", "name": "Sam", "invite_code": "K7QM-2XRD-9HTW" }
+```
+**201:**
+```json
+{
+  "success": true,
+  "data": {
+    "user": { "id": 3, "email": "sam@example.com", "name": "Sam", "created_at": "2026-09-20 18:04:11" },
+    "access_token": "eyJ…", "refresh_token": "p1X…", "token_type": "Bearer", "expires_in": 900
+  }
+}
+```
+**403** invite code unknown, used, or expired · **409** email already registered (the invite is not spent) · **400** validation. Email is trimmed and lower-cased. Password: 10–200 characters, no composition rules.
+
+### POST /api/auth/login
+`{ "email", "password" }` → **200** with the same shape as register. **401** `"Email or password is incorrect"` for both a wrong password and an unknown email, with the same response time.
+
+### POST /api/auth/refresh
+`{ "refresh_token" }` → **200** `{ access_token, refresh_token, token_type, expires_in }`. **401** `"Session expired. Please log in again."`
+
+### POST /api/auth/logout
+`{ "refresh_token" }` → **200** always. Ends that device's session only.
+
+### POST /api/auth/logout-all 🔒
+Ends every session on every device immediately. → `{ "sessions_ended": 2 }`
+
+### GET /api/auth/me 🔒
+→ `{ id, email, name, created_at }`
+
+### DELETE /api/auth/me 🔒
+`{ "password" }` → **200** `{ "deleted": true }`. Permanently deletes the account and all of its data. **403** if the password is wrong. Required by both app stores to be reachable in-app.
+
+### POST /api/auth/forgot-password
+`{ "email" }` → **200** always, with the same message whether or not the email has an account (and even if the mail provider is down). Sends a link valid for 30 minutes. Asking again cancels the earlier link.
+
+### POST /api/auth/reset-password
+`{ "token", "password" }` → **200**. The link works once. Ends every session. **400** if the token is unknown, used, or expired.
+
+### Rate limiting
+The unauthenticated endpoints share a budget of 20 requests per 15 minutes per IP address. Over that: **429** `"Too many attempts. Please wait a few minutes and try again."` Authenticated requests are not limited.
+
+---
+
 ## Validation
 
 Every request is validated before it reaches the database (`backend/src/validation.ts`). A request that fails is rejected with **400** and stores nothing. All problems are reported at once. `error` is a single sentence suitable for showing to a person; `details[].path` names the field so a form can highlight it (for batch requests the path includes the index, e.g. `1.meal`).
@@ -482,9 +553,12 @@ These are enforced in the frontend only (not the API). Included here for referen
 | 200 | Success (GET, DELETE) |
 | 201 | Created successfully (POST) |
 | 400 | Bad request — validation failed (see `details`), or the body is not valid JSON |
-| 403 | Request came from a browser origin that is not on the CORS allow-list |
+| 401 | Missing, expired, or revoked access token; or wrong login credentials |
+| 403 | Invalid invite code, wrong password on account deletion, or a browser origin not on the CORS allow-list |
+| 409 | Email already registered |
 | 404 | Resource not found |
 | 413 | Request body too large (limit 100 KB) |
+| 429 | Too many attempts on the public auth endpoints |
 | 500 | Internal server error — check PM2 logs |
 
 All 4xx and 5xx responses include `{ "success": false, "error": "..." }`.
@@ -503,5 +577,3 @@ These endpoints do not exist yet but are planned as part of future feature devel
 | GET | `/api/foods/barcode/:barcode` | Look up food by barcode (Open Food Facts proxy) |
 | GET | `/api/summary/weekly` | 7-day rolling averages |
 | GET | `/api/summary/export?start=&end=` | CSV export for dietitian |
-| POST | `/api/auth/login` | JWT authentication (for multi-user) |
-| POST | `/api/auth/register` | User registration |

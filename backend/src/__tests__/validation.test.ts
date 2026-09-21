@@ -6,7 +6,7 @@
 import { makeTestContext, TestContext, food, exercise, DAY } from "./helpers";
 
 let t: TestContext;
-beforeEach(() => { t = makeTestContext(); });
+beforeEach(async () => { t = await makeTestContext(); });
 afterEach(() => { t.db.close(); });
 
 const rows = (table: string) => (t.db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;

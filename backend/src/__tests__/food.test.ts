@@ -1,7 +1,7 @@
 import { makeTestContext, TestContext, food, DAY } from "./helpers";
 
 let t: TestContext;
-beforeEach(() => { t = makeTestContext(); });
+beforeEach(async () => { t = await makeTestContext(); });
 afterEach(() => { t.db.close(); });
 
 const rowCount = () => (t.db.prepare("SELECT COUNT(*) AS n FROM food_logs").get() as { n: number }).n;
