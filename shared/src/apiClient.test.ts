@@ -34,6 +34,8 @@ describe("createApiClient", () => {
     await client.catalog.barcode("0016000275287");
     await client.catalog.exercises();
     await client.catalog.mealPlans();
+    await client.presets.list();
+    await client.presets.preview("balanced", { age: 40, height_cm: 170, weight_kg: 70 });
 
     expect(calls.map((c) => `${c.method} ${c.path}`)).toEqual([
       "GET /api/auth/me",
@@ -43,6 +45,7 @@ describe("createApiClient", () => {
       "POST /api/summary/weight", "GET /api/summary/weight?days=30", "GET /api/summary/weight?days=7",
       "GET /api/foods", "POST /api/foods", "DELETE /api/foods/500", "GET /api/foods/barcode/0016000275287",
       "GET /api/exercises", "GET /api/meal-plans",
+      "GET /api/presets", "POST /api/presets/balanced/preview",
     ]);
     expect(calls[2].body).toEqual(entry);
     expect(calls[3].body).toEqual([entry]);

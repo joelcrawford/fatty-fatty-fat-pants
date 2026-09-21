@@ -217,6 +217,58 @@ Each plan with its items, and each item with its full food, so a client can disp
 
 ---
 
+## Presets
+
+A preset is a named nutrition plan that turns a person's stats into starting daily targets. The rules are **code in the shared package** (`shared/src/presets.ts`), so a client can call `computeTargets()` locally for instant feedback while the user types, and gets exactly what the server would say. These endpoints mean a client never hard-codes the list.
+
+> Not medical advice. Every response carries a `disclaimer` that the review screen must show, and each preset lists who it is `notFor`. Every number is editable by the user.
+
+### GET /api/presets
+```json
+{
+  "presets": [
+    { "key": "galveston_style", "name": "Galveston-style, muscle-preserving", "summary": "…", "whoFor": "…",
+      "notFor": ["Anyone under 18", "…"], "carbs_mode": "net", "emphasis": ["carbs", "fiber", "protein", "calories"],
+      "sources": ["…"], "computed": true }
+  ],
+  "disclaimer": "These targets are general estimates …",
+  "limits": { "calorie_floor": { "female": 1200, "male": 1500 }, "calorie_ceiling": 5000 },
+  "activity_levels": ["sedentary", "light", "moderate", "active", "very_active"],
+  "goals": ["lose", "maintain", "gain"]
+}
+```
+Five presets: `galveston_style`, `balanced`, `high_protein`, `low_carb`, and `custom` (`computed: false`: the user types their own numbers). `emphasis` is the order in which to feature metrics on the dashboard. **User-facing text says "Galveston-style", never "Galveston Diet"**, which is someone else's brand.
+
+### POST /api/presets/:key/preview
+Targets for a draft profile. **Stores nothing**: this is what the review screen shows before the user commits. Metric units; convert from lbs and ft/in with the shared helpers.
+
+| Field | Required | Notes |
+|---|---|---|
+| `age` | yes | 18–100. Under 18 is refused |
+| `height_cm` | yes | 120–230 |
+| `weight_kg` | yes | 30–300 |
+| `sex` | no | `female`, `male` or `null`. When withheld the energy formula uses the midpoint and the **higher** calorie floor applies |
+| `activity` | no | default `sedentary` |
+| `goal` | no | `lose`, `maintain` (default), `gain` |
+| `weekly_rate_kg` | no | 0–1, default 0.45 (about 1 lb). Ignored when maintaining |
+
+```json
+{
+  "preset": "galveston_style",
+  "targets": { "calories": 1200, "protein_g": 80, "carbs_g": 25, "carbs_mode": "net", "fat_g": 80, "fiber_g": 30 },
+  "explanation": { "bmr": 1197, "maintenance": 1436, "goal_adjustment": -499, "rate_capped": false,
+                   "calorie_floor": 1200, "floor_applied": true, "ceiling_applied": false, "protein_capped": false },
+  "disclaimer": "…"
+}
+```
+`carbs_mode` says how to read `carbs_g`: `net` (carbohydrate minus fibre) for the low-carb plans, `total` for the others. `calories` is a **net** target: exercise is earned back on top of it.
+
+`explanation` is for the review screen and hides nothing. In particular show it when `floor_applied` (the safety minimum set the calories, not the goal), `rate_capped` (the requested pace was reduced to 1% of body weight a week, at most 1 kg), `ceiling_applied`, or `protein_capped` (held to 35% of calories).
+
+**400** for invalid input, an unknown preset key, or `custom` (which has no formula).
+
+---
+
 ## Food Log
 
 ### GET /api/food/:date
