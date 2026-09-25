@@ -1,16 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { dayTotals, netCarbs as netCarbsOf, remainingCalories, scaleMacros, round as r } from "@nutrition/shared";
+import { dayTotals, netCarbs as netCarbsOf, remainingCalories, scaleMacros, round as r, PRESETS, Profile } from "@nutrition/shared";
 import { api, FoodEntry, ExerciseEntry, NewFoodEntry, NewExerciseEntry, Food, Exercise, MealPlan } from "./api";
 import { daysAgo, useToday } from "./date";
 import { AccountPanel } from "./AuthScreens";
 import type { User } from "./session";
 
-// ── Targets (Galveston-modified for Katarina) ─────────────────────────────────
-const DAILY_CAL = 1200;
-const PROTEIN_TARGET = 80;
-const CARBS_TARGET = 25;
-const FAT_TARGET = 80;
-const FIBER_TARGET = 30;
 const MEALS = ["Breakfast", "Lunch", "Dinner", "Snacks"] as const;
 type Meal = typeof MEALS[number];
 
@@ -25,8 +19,12 @@ const EMPTY_FOOD = { name: "", unit: "g", defaultServing: "100", cal: "", protei
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function NutriTracker({ user }: { user: User }) {
+export default function NutriTracker({ user, profile }: { user: User; profile: Profile; onProfileChanged?: () => void }) {
   const [accountOpen, setAccountOpen] = useState(false);
+
+  // Every target comes from this user's own profile (set during onboarding).
+  const { calories: DAILY_CAL, protein_g: PROTEIN_TARGET, carbs_g: CARBS_TARGET, fat_g: FAT_TARGET, fiber_g: FIBER_TARGET, carbs_mode } = profile.targets;
+  const carbsLabel = carbs_mode === "net" ? "Net Carbs" : "Carbs";
   const date = useToday();
   const [tab, setTab] = useState("dashboard");
   const [foodLog, setFoodLog] = useState<FoodEntry[]>([]);
@@ -293,7 +291,7 @@ export default function NutriTracker({ user }: { user: User }) {
                 <div style={{ background: "white", borderRadius: 18, padding: 20, marginBottom: 14, boxShadow: "0 1px 10px rgba(0,0,0,0.06)" }}>
                   <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 17, marginBottom: 16 }}>Macronutrients</div>
                   <MacroBar label="Protein" current={totalProtein} target={PROTEIN_TARGET} color={C.protein} />
-                  <MacroBar label="Net Carbs" current={netCarbs} target={CARBS_TARGET} color={C.gold} />
+                  <MacroBar label={carbsLabel} current={carbs_mode === "net" ? netCarbs : totalCarbs} target={CARBS_TARGET} color={C.gold} />
                   <MacroBar label="Fat" current={totalFat} target={FAT_TARGET} color={C.fat} />
                   <MacroBar label="Fibre" current={totalFiber} target={FIBER_TARGET} color={C.fiber} />
                   <div style={{ fontSize: 10.5, color: C.muted, marginTop: 10, textAlign: "center" }}>Total carbs: {r(totalCarbs)}g − {r(totalFiber)}g fibre = {r(netCarbs)}g net</div>
@@ -354,7 +352,7 @@ export default function NutriTracker({ user }: { user: User }) {
                   </div>
                 )}
                 <div style={{ textAlign: "center", padding: "16px 0 0", fontSize: 11, color: C.muted, lineHeight: 1.7 }}>
-                  1,200 cal · 80g protein · 25g net carbs · 80g fat · 30g fibre<br />Galveston-aligned · optimized for muscle preservation
+                  {DAILY_CAL} cal · {PROTEIN_TARGET}g protein · {CARBS_TARGET}g {carbs_mode === "net" ? "net " : ""}carbs · {FAT_TARGET}g fat · {FIBER_TARGET}g fibre<br />{PRESETS[profile.preset_key].name}
                 </div>
               </>
             )}
@@ -496,11 +494,11 @@ export default function NutriTracker({ user }: { user: User }) {
             <div style={{ background: "white", borderRadius: 18, padding: 20, marginBottom: 14, boxShadow: "0 1px 10px rgba(0,0,0,0.06)" }}>
               <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 17, marginBottom: 16 }}>Macro Analysis</div>
               {(() => {
-                const { protein: hP, fat: hF, fiber: hFib, netCarbs: hNC, netCal: hNet } = dayTotals(historyFood, historyEx);
+                const { protein: hP, carbs: hC, fat: hF, fiber: hFib, netCarbs: hNC, netCal: hNet } = dayTotals(historyFood, historyEx);
                 return <>
                   <BarAnalysis label="Calories (net)" actual={hNet} target={DAILY_CAL} color={C.primary} unit=" cal" />
                   <BarAnalysis label="Protein" actual={hP} target={PROTEIN_TARGET} color={C.protein} />
-                  <BarAnalysis label="Net Carbs" actual={hNC} target={CARBS_TARGET} color={C.gold} />
+                  <BarAnalysis label={carbsLabel} actual={carbs_mode === "net" ? hNC : hC} target={CARBS_TARGET} color={C.gold} />
                   <BarAnalysis label="Fat" actual={hF} target={FAT_TARGET} color={C.fat} />
                   <BarAnalysis label="Fibre" actual={hFib} target={FIBER_TARGET} color={C.fiber} />
                 </>;

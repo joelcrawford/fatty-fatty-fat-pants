@@ -6,7 +6,7 @@ import type {
   CatalogFood, CatalogExercise, CatalogMealPlan, BarcodeResult,
 } from "./types";
 import type { NewFoodEntry, NewExerciseEntry, NewWeightEntry, NewCustomFood } from "./schemas";
-import type { PresetInfo, PresetKey, PresetProfileInput, PresetResult, ActivityLevel, Goal } from "./presets";
+import type { PresetInfo, PresetKey, PresetProfileInput, PresetResult, ActivityLevel, Goal, Profile, ProfileInput } from "./presets";
 
 /** Resolves to the `data` of the response envelope, or throws (Session throws ApiError). */
 export type RequestFn = <T>(path: string, init?: RequestInit) => Promise<T>;
@@ -60,6 +60,13 @@ export function createApiClient(request: RequestFn) {
       barcode: (barcode: string) => request<BarcodeResult>(`/api/foods/barcode/${encodeURIComponent(barcode)}`),
       exercises: () => request<CatalogExercise[]>("/api/exercises"),
       mealPlans: () => request<CatalogMealPlan[]>("/api/meal-plans"),
+    },
+
+    profile: {
+      /** `profile` is null until the user has onboarded. */
+      get: () => request<{ profile: Profile | null }>("/api/profile"),
+      /** Completes onboarding the first time; updates afterwards. Send the whole profile. */
+      save: (profile: ProfileInput) => request<{ profile: Profile }>("/api/profile", { method: "PUT", body: JSON.stringify(profile) }),
     },
 
     presets: {
